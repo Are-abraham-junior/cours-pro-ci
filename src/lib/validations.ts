@@ -12,6 +12,10 @@ export const phoneSchema = z.string()
     return `+225${digits}`;
   });
 
+// Type d'utilisateur
+export const userTypeSchema = z.enum(['client', 'prestataire']);
+export type UserType = z.infer<typeof userTypeSchema>;
+
 // Schéma d'inscription
 export const signUpSchema = z.object({
   fullName: z.string()
@@ -21,6 +25,7 @@ export const signUpSchema = z.object({
   password: z.string()
     .min(6, "Le mot de passe doit contenir au moins 6 caractères")
     .max(72, "Le mot de passe est trop long"),
+  userType: userTypeSchema,
 });
 
 // Schéma de connexion

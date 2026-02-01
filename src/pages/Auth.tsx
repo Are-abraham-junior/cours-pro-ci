@@ -9,12 +9,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { signUpSchema, signInSchema, phoneToEmail, SignUpFormData, SignInFormData } from '@/lib/validations';
-import { Loader2, GraduationCap, Phone, Lock, User } from 'lucide-react';
+import { signUpSchema, signInSchema, phoneToEmail, SignUpFormData, SignInFormData, UserType } from '@/lib/validations';
+import { Loader2, GraduationCap, Phone, Lock, User, ArrowLeft } from 'lucide-react';
+import { UserTypeSelector } from '@/components/auth/UserTypeSelector';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
+  const [signupStep, setSignupStep] = useState<'type-selection' | 'form'>('type-selection');
+  const [selectedUserType, setSelectedUserType] = useState<UserType | undefined>();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -24,6 +27,7 @@ export default function Auth() {
       fullName: '',
       phone: '',
       password: '',
+      userType: undefined,
     },
   });
 
@@ -34,6 +38,17 @@ export default function Auth() {
       password: '',
     },
   });
+
+  const handleContinueToForm = () => {
+    if (selectedUserType) {
+      signUpForm.setValue('userType', selectedUserType);
+      setSignupStep('form');
+    }
+  };
+
+  const handleBackToTypeSelection = () => {
+    setSignupStep('type-selection');
+  };
 
   const handleSignUp = async (data: SignUpFormData) => {
     setLoading(true);
@@ -47,6 +62,7 @@ export default function Auth() {
           data: {
             full_name: data.fullName,
             phone: data.phone,
+            user_type: data.userType,
           },
           emailRedirectTo: window.location.origin,
         },
@@ -104,6 +120,16 @@ export default function Auth() {
     }
   };
 
+  // Reset signup step when switching tabs
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'signup') {
+      setSignupStep('type-selection');
+      setSelectedUserType(undefined);
+      signUpForm.reset();
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-secondary/10 via-background to-primary/10 p-4">
       <div className="w-full max-w-md">
@@ -117,7 +143,7 @@ export default function Auth() {
         </div>
 
         <Card className="shadow-xl border-0">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <CardHeader className="pb-4">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Connexion</TabsTrigger>
@@ -194,89 +220,125 @@ export default function Auth() {
 
               {/* Inscription */}
               <TabsContent value="signup" className="mt-0">
-                <CardTitle className="text-xl mb-2">Créer un compte</CardTitle>
-                <CardDescription className="mb-6">
-                  Le premier utilisateur sera automatiquement Super Admin
-                </CardDescription>
+                {signupStep === 'type-selection' ? (
+                  <>
+                    <CardTitle className="text-xl mb-2 text-center">Rejoignez Mon Répétiteur</CardTitle>
+                    <CardDescription className="mb-6 text-center">
+                      Choisissez votre profil pour commencer
+                    </CardDescription>
 
-                <Form {...signUpForm}>
-                  <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
-                    <FormField
-                      control={signUpForm.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nom complet</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                placeholder="Jean Dupont"
-                                className="pl-10"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                    <UserTypeSelector
+                      value={selectedUserType}
+                      onChange={setSelectedUserType}
                     />
 
-                    <FormField
-                      control={signUpForm.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Numéro de téléphone</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                placeholder="07 01 02 03 04"
-                                className="pl-10"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={signUpForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mot de passe</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                type="password"
-                                placeholder="Minimum 6 caractères"
-                                className="pl-10"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Création du compte...
-                        </>
-                      ) : (
-                        "S'inscrire"
-                      )}
+                    <Button
+                      className="w-full mt-6"
+                      disabled={!selectedUserType}
+                      onClick={handleContinueToForm}
+                    >
+                      Continuer
                     </Button>
-                  </form>
-                </Form>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleBackToTypeSelection}
+                        className="h-8 w-8"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <div>
+                        <CardTitle className="text-xl">Créer un compte</CardTitle>
+                        <CardDescription>
+                          {selectedUserType === 'client' ? 'En tant que Parent' : 'En tant que Répétiteur'}
+                        </CardDescription>
+                      </div>
+                    </div>
+
+                    <Form {...signUpForm}>
+                      <form onSubmit={signUpForm.handleSubmit(handleSignUp)} className="space-y-4">
+                        <FormField
+                          control={signUpForm.control}
+                          name="fullName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nom complet</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    placeholder="Jean Dupont"
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={signUpForm.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Numéro de téléphone</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    placeholder="07 01 02 03 04"
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={signUpForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Mot de passe</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                  <Input
+                                    type="password"
+                                    placeholder="Minimum 6 caractères"
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <Button type="submit" className="w-full" disabled={loading}>
+                          {loading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Création du compte...
+                            </>
+                          ) : (
+                            "S'inscrire"
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </>
+                )}
               </TabsContent>
             </CardContent>
           </Tabs>
