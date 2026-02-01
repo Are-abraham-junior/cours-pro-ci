@@ -11,6 +11,8 @@ import { Loader2 } from "lucide-react";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/admin/Dashboard";
 import Users from "./pages/admin/Users";
+import Prestataires from "./pages/admin/Prestataires";
+import Clients from "./pages/admin/Clients";
 import Profile from "./pages/admin/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -93,7 +95,7 @@ const App = () => (
               path="/prestataires"
               element={
                 <ProtectedRoute requiredRoles={['super_admin', 'admin']}>
-                  <Users />
+                  <Prestataires />
                 </ProtectedRoute>
               }
             />
@@ -103,7 +105,7 @@ const App = () => (
               path="/clients"
               element={
                 <ProtectedRoute requiredRoles={['super_admin', 'admin']}>
-                  <Users />
+                  <Clients />
                 </ProtectedRoute>
               }
             />
