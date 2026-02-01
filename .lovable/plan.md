@@ -1,225 +1,140 @@
 
-# Plan d'implémentation - Mon Répétiteur
+
+# Plan : Sélecteur de type d'utilisateur pour l'inscription
 
 ## Vue d'ensemble
-Ce plan couvre la création du système d'authentification, du dashboard administrateur et de la gestion complète des utilisateurs avec 4 types de rôles : Super Admin, Admin, Prestataire (Répétiteur), et Client (Parent).
+Ajouter une section de sélection de rôle sur la page d'inscription, inspirée de l'image fournie, permettant à l'utilisateur de choisir entre "Je suis un Parent" ou "Je suis un Répétiteur" avant de remplir le formulaire.
 
 ---
 
-## 1. Configuration de la base de données Supabase
+## Design proposé
 
-### 1.1 Création de l'enum pour les rôles
+```text
++-----------------------------------------------+
+|           Rejoignez Mon Répétiteur            |
+|    en tant que Parent ou Répétiteur           |
++-----------------------------------------------+
+|                                               |
+|  +------------------+  +------------------+   |
+|  |       👤         |  |       👨‍🏫         |   |
+|  |                  |  |                  |   |
+|  |  Je suis un      |  |  Je suis un      |   |
+|  |  parent, je      |  |  répétiteur      |   |
+|  |  recherche un    |  |  et je propose   |   |
+|  |  répétiteur      |  |  mes services    |   |
+|  |            ( )   |  |            ( )   |   |
+|  +------------------+  +------------------+   |
+|                                               |
+|  [Formulaire d'inscription si sélection]      |
+|                                               |
++-----------------------------------------------+
+```
+
+---
+
+## Modifications techniques
+
+### 1. Mise a jour du schema de validation (`src/lib/validations.ts`)
+
+Ajouter un champ optionnel `userType` au schema d'inscription :
+
+```typescript
+export const signUpSchema = z.object({
+  fullName: z.string()
+    .min(2, "Le nom doit contenir au moins 2 caractères")
+    .max(100, "Le nom est trop long"),
+  phone: phoneSchema,
+  password: z.string()
+    .min(6, "Le mot de passe doit contenir au moins 6 caractères")
+    .max(72, "Le mot de passe est trop long"),
+  userType: z.enum(['client', 'prestataire']).optional(),
+});
+```
+
+### 2. Nouveau composant `UserTypeSelector` (`src/components/auth/UserTypeSelector.tsx`)
+
+Composant reutilisable avec deux cartes cliquables :
+- **Card Parent** : Icone utilisateur, description "Je suis un parent, je recherche un repetiteur pour mon enfant"
+- **Card Repetiteur** : Icone professeur, description "Je suis un repetiteur et je propose mes services"
+- Radio button integre pour la selection
+- Animation de selection (bordure coloree, effet d'elevation)
+
+### 3. Modification de la page Auth (`src/pages/Auth.tsx`)
+
+**Nouveau flux d'inscription en deux etapes :**
+
+1. **Etape 1** : Selection du type d'utilisateur (Parent ou Repetiteur)
+   - Affichage des deux cartes
+   - Bouton "Continuer" desactive tant qu'aucune selection
+
+2. **Etape 2** : Formulaire d'inscription classique
+   - Nom complet
+   - Numero de telephone
+   - Mot de passe
+   - Bouton retour pour changer de type
+
+**Logique de transmission du role :**
+- Le type selectionne sera transmis via `user_metadata` lors de l'inscription
+- Le trigger `handle_new_user()` utilisera cette information au lieu du role par defaut
+
+### 4. Mise a jour du trigger SQL (migration)
+
+Modifier la fonction `handle_new_user()` pour lire le type d'utilisateur depuis les metadonnees :
+
 ```sql
-CREATE TYPE public.app_role AS ENUM ('super_admin', 'admin', 'prestataire', 'client');
-```
+-- Dans handle_new_user():
+_user_type := COALESCE(
+  NEW.raw_user_meta_data->>'user_type', 
+  'client'
+)::public.app_role;
 
-### 1.2 Table `profiles` (informations utilisateur)
-| Colonne | Type | Description |
-|---------|------|-------------|
-| id | UUID (PK) | Référence à auth.users |
-| full_name | TEXT | Nom complet |
-| phone | TEXT | Numéro de téléphone (+225) |
-| avatar_url | TEXT | Photo de profil (optionnel) |
-| is_active | BOOLEAN | Compte actif/désactivé |
-| created_at | TIMESTAMP | Date de création |
-| updated_at | TIMESTAMP | Dernière mise à jour |
-
-### 1.3 Table `user_roles` (rôles séparés - sécurité)
-| Colonne | Type | Description |
-|---------|------|-------------|
-| id | UUID (PK) | Identifiant unique |
-| user_id | UUID (FK) | Référence à auth.users |
-| role | app_role | Rôle de l'utilisateur |
-
-### 1.4 Fonction de sécurité `has_role`
-Fonction avec `SECURITY DEFINER` pour vérifier les rôles sans récursion RLS.
-
-### 1.5 Trigger pour créer le profil automatiquement
-- Crée automatiquement un profil lors de l'inscription
-- Le premier utilisateur reçoit le rôle `super_admin`
-
-### 1.6 Politiques RLS
-- Les utilisateurs peuvent voir/modifier leur propre profil
-- Les admins peuvent voir tous les profils
-- Seuls les super_admins peuvent modifier les rôles
-
----
-
-## 2. Thème visuel - Couleurs Mon Répétiteur
-
-Mise à jour de `src/index.css` avec les couleurs du logo :
-- **Couleur principale (Orange)** : #E87722 → HSL(24, 81%, 52%)
-- **Couleur secondaire (Bleu)** : #1B4F8A → HSL(213, 67%, 32%)
-
----
-
-## 3. Page de connexion/inscription
-
-### Fichier : `src/pages/Auth.tsx`
-
-**Fonctionnalités :**
-- Onglets Connexion / Inscription
-- Formulaire d'inscription :
-  - Nom complet (validation requise)
-  - Numéro de téléphone (+225, format ivoirien)
-  - Mot de passe (min. 6 caractères)
-- Formulaire de connexion :
-  - Email (généré à partir du téléphone : `+225XXXXXXXXXX@monrepetiteur.ci`)
-  - Mot de passe
-- Logo Mon Répétiteur en haut
-- Validation avec Zod
-- Messages d'erreur en français
-- Design responsive (mobile-first)
-
----
-
-## 4. Dashboard Administrateur
-
-### 4.1 Layout avec sidebar : `src/components/layout/DashboardLayout.tsx`
-
-**Structure :**
-```text
-+------------------+----------------------------------+
-|     SIDEBAR      |           CONTENU                |
-|                  |                                  |
-|  Logo            |   Header avec titre              |
-|  ─────────       |   ────────────────────           |
-|  Dashboard       |                                  |
-|  Utilisateurs    |   [Contenu de la page]           |
-|  Prestataires    |                                  |
-|  Clients         |                                  |
-|                  |                                  |
-|  ─────────       |                                  |
-|  Mon Profil      |                                  |
-|  Déconnexion     |                                  |
-+------------------+----------------------------------+
-```
-
-### 4.2 Page Dashboard : `src/pages/admin/Dashboard.tsx`
-
-**Cartes statistiques :**
-- Total Utilisateurs
-- Prestataires actifs
-- Clients inscrits
-- Cours ce mois
-
-**Sections :**
-- Dernières inscriptions
-- Activité récente
-
-### 4.3 Page Utilisateurs : `src/pages/admin/Users.tsx`
-
-**Fonctionnalités :**
-- Tableau avec tous les utilisateurs
-- Filtres par rôle (Super Admin, Admin, Prestataire, Client)
-- Recherche par nom/téléphone
-- Actions : Voir profil, Modifier, Activer/Désactiver
-- Badge coloré selon le rôle
-
-### 4.4 Composant Profil utilisateur : `src/components/users/UserProfile.tsx`
-
-**Affichage :**
-- Photo de profil (avatar)
-- Informations personnelles
-- Rôle avec badge
-- Date d'inscription
-- Statut (actif/inactif)
-- Boutons d'action selon permissions
-
----
-
-## 5. Hooks et contextes
-
-### 5.1 Contexte d'authentification : `src/contexts/AuthContext.tsx`
-- État de connexion
-- Informations utilisateur et profil
-- Rôle(s) de l'utilisateur
-- Fonctions : login, logout, isAdmin, isSuperAdmin
-
-### 5.2 Hook de vérification des rôles : `src/hooks/useUserRole.ts`
-- Récupère les rôles de l'utilisateur connecté
-- Fonctions utilitaires : hasRole, isAdmin, isSuperAdmin
-
----
-
-## 6. Routes et protection
-
-### Mise à jour de `src/App.tsx`
-
-**Routes publiques :**
-- `/auth` - Page de connexion/inscription
-
-**Routes protégées (authentifié) :**
-- `/` - Redirection selon rôle
-- `/dashboard` - Dashboard admin
-- `/users` - Gestion des utilisateurs
-- `/profile` - Mon profil
-
-### Composant de protection : `src/components/ProtectedRoute.tsx`
-- Vérifie l'authentification
-- Vérifie les rôles requis
-- Redirige si non autorisé
-
----
-
-## 7. Structure des fichiers à créer
-
-```text
-src/
-├── contexts/
-│   └── AuthContext.tsx
-├── hooks/
-│   └── useUserRole.ts
-├── components/
-│   ├── layout/
-│   │   ├── DashboardLayout.tsx
-│   │   └── Sidebar.tsx
-│   ├── users/
-│   │   ├── UserProfile.tsx
-│   │   ├── UserCard.tsx
-│   │   └── RoleBadge.tsx
-│   └── ProtectedRoute.tsx
-├── pages/
-│   ├── Auth.tsx
-│   └── admin/
-│       ├── Dashboard.tsx
-│       ├── Users.tsx
-│       └── Profile.tsx
-└── lib/
-    └── validations.ts (schémas Zod)
+-- Assigner le role en fonction du type choisi
+IF _is_first_user THEN
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (NEW.id, 'super_admin');
+ELSE
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (NEW.id, _user_type);
+END IF;
 ```
 
 ---
 
-## Détails techniques
+## Structure des fichiers
 
-### Validation du numéro de téléphone ivoirien
-```typescript
-const phoneSchema = z.string()
-  .regex(/^(\+225)?[0-9]{10}$/, "Numéro de téléphone invalide")
-  .transform(val => val.startsWith('+225') ? val : `+225${val}`);
-```
-
-### Génération d'email à partir du téléphone
-Puisque Supabase Auth nécessite un email, nous générons un email unique :
-```typescript
-const email = `${phone.replace('+', '')}@monrepetiteur.local`;
-```
-
-### Sécurité des rôles
-- Les rôles sont stockés dans une table séparée (`user_roles`)
-- Vérification côté serveur uniquement via la fonction `has_role`
-- Jamais de vérification via localStorage ou cookies
+| Fichier | Action |
+|---------|--------|
+| `src/components/auth/UserTypeSelector.tsx` | Creer |
+| `src/pages/Auth.tsx` | Modifier |
+| `src/lib/validations.ts` | Modifier |
+| Migration SQL | Creer |
 
 ---
 
-## Ordre d'exécution
+## Details visuels
 
-1. Migration SQL (tables, enum, fonctions, triggers, RLS)
-2. Mise à jour du thème CSS
-3. Création du contexte d'authentification
-4. Page d'authentification
-5. Composants de layout (sidebar, dashboard)
-6. Pages admin (Dashboard, Users, Profile)
-7. Routes protégées
-8. Tests de bout en bout
+**Style des cartes de selection :**
+- Fond blanc avec bordure gris clair
+- Au survol : ombre legere
+- Selection : bordure orange (primary), fond orange tres leger
+- Radio button en haut a droite de chaque carte
+- Icones Lucide : `Users` pour parent, `GraduationCap` pour repetiteur
+
+**Couleurs utilisees :**
+- Bordure selection : `border-primary` (orange)
+- Fond selection : `bg-primary/5`
+- Texte description : `text-muted-foreground`
+
+---
+
+## Experience utilisateur
+
+1. L'utilisateur arrive sur l'onglet "Inscription"
+2. Il voit les deux cartes de selection
+3. Il clique sur "Parent" ou "Repetiteur"
+4. Le formulaire d'inscription apparait avec un indicateur du type choisi
+5. Il remplit le formulaire et soumet
+6. Le compte est cree avec le role correspondant
+
+**Note importante :** Le premier utilisateur reste automatiquement Super Admin, independamment de son choix de type.
+
