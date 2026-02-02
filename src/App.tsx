@@ -16,6 +16,16 @@ import Clients from "./pages/admin/Clients";
 import Profile from "./pages/admin/Profile";
 import NotFound from "./pages/NotFound";
 
+// Parent pages
+import MesOffres from "./pages/parent/MesOffres";
+import NouvelleOffre from "./pages/parent/NouvelleOffre";
+import OffreDetailsParent from "./pages/parent/OffreDetails";
+
+// Répétiteur pages
+import OffresDisponibles from "./pages/repetiteur/OffresDisponibles";
+import OffreDetailsRepetiteur from "./pages/repetiteur/OffreDetails";
+import MesCandidatures from "./pages/repetiteur/MesCandidatures";
+
 const queryClient = new QueryClient();
 
 // Composant de redirection basé sur l'authentification
@@ -116,6 +126,58 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Routes Parent - Gestion des offres */}
+            <Route
+              path="/mes-offres"
+              element={
+                <ProtectedRoute requiredRoles={['client']}>
+                  <MesOffres />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mes-offres/nouvelle"
+              element={
+                <ProtectedRoute requiredRoles={['client']}>
+                  <NouvelleOffre />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mes-offres/:id"
+              element={
+                <ProtectedRoute requiredRoles={['client']}>
+                  <OffreDetailsParent />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Routes Répétiteur - Consultation offres et candidatures */}
+            <Route
+              path="/offres"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <OffresDisponibles />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/offres/:id"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <OffreDetailsRepetiteur />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mes-candidatures"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <MesCandidatures />
                 </ProtectedRoute>
               }
             />

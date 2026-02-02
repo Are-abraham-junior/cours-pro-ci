@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      applications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          offer_id: string
+          repetiteur_id: string
+          statut: Database["public"]["Enums"]["application_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          offer_id: string
+          repetiteur_id: string
+          statut?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          offer_id?: string
+          repetiteur_id?: string
+          statut?: Database["public"]["Enums"]["application_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_repetiteur_id_fkey"
+            columns: ["repetiteur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offers: {
+        Row: {
+          adresse: string
+          budget_max: number
+          budget_min: number
+          created_at: string
+          description: string
+          frequence: string
+          id: string
+          matiere: string
+          niveau: string
+          parent_id: string
+          statut: Database["public"]["Enums"]["offer_status"]
+          updated_at: string
+        }
+        Insert: {
+          adresse: string
+          budget_max?: number
+          budget_min?: number
+          created_at?: string
+          description: string
+          frequence: string
+          id?: string
+          matiere: string
+          niveau: string
+          parent_id: string
+          statut?: Database["public"]["Enums"]["offer_status"]
+          updated_at?: string
+        }
+        Update: {
+          adresse?: string
+          budget_max?: number
+          budget_min?: number
+          created_at?: string
+          description?: string
+          frequence?: string
+          id?: string
+          matiere?: string
+          niveau?: string
+          parent_id?: string
+          statut?: Database["public"]["Enums"]["offer_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offers_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -78,9 +176,13 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_super: { Args: { _user_id: string }; Returns: boolean }
+      is_client: { Args: { _user_id: string }; Returns: boolean }
+      is_prestataire: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "super_admin" | "admin" | "prestataire" | "client"
+      application_status: "en_attente" | "acceptee" | "refusee"
+      offer_status: "ouverte" | "en_cours" | "fermee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -209,6 +311,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "admin", "prestataire", "client"],
+      application_status: ["en_attente", "acceptee", "refusee"],
+      offer_status: ["ouverte", "en_cours", "fermee"],
     },
   },
 } as const
