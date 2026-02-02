@@ -1,140 +1,329 @@
 
-
-# Plan : Sélecteur de type d'utilisateur pour l'inscription
+# Plan d'Implémentation Progressive : Système d'Offres de Cours
 
 ## Vue d'ensemble
-Ajouter une section de sélection de rôle sur la page d'inscription, inspirée de l'image fournie, permettant à l'utilisateur de choisir entre "Je suis un Parent" ou "Je suis un Répétiteur" avant de remplir le formulaire.
+
+Ce plan implémente le **cycle de vie complet des offres de cours** selon le cahier des charges : création d'offres par les Parents, consultation et candidatures par les Répétiteurs.
 
 ---
 
-## Design proposé
+## État actuel du projet
+
+| Fonctionnalité | Statut |
+|----------------|--------|
+| Authentification (téléphone + mot de passe) | ✅ Fait |
+| Sélection du rôle (Parent/Répétiteur) | ✅ Fait |
+| Profils utilisateurs (nom, téléphone, avatar) | ✅ Fait |
+| Dashboard Admin avec statistiques | ✅ Fait |
+| Gestion des utilisateurs (liste, activation) | ✅ Fait |
+| **Système d'offres de cours** | 🔴 À faire |
+
+---
+
+## Phase 1 : Base de données (Migration SQL)
+
+### Nouvelles tables à créer
+
+```text
++------------------+          +------------------+
+|      offers      |          |   applications   |
++------------------+          +------------------+
+| id               |<-------->| id               |
+| parent_id (FK)   |          | offer_id (FK)    |
+| matiere          |          | repetiteur_id    |
+| niveau           |          | statut           |
+| description      |          | message          |
+| adresse          |          | created_at       |
+| frequence        |          +------------------+
+| budget           |
+| statut           |
+| created_at       |
++------------------+
+```
+
+### Table `offers` (Offres de cours)
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID | Identifiant unique |
+| parent_id | UUID (FK profiles) | Parent créateur |
+| matiere | TEXT | Matière (Maths, Français, etc.) |
+| niveau | TEXT | Niveau scolaire (CP, CE1, 6ème, etc.) |
+| description | TEXT | Détails du cours souhaité |
+| adresse | TEXT | Lieu des cours |
+| frequence | TEXT | Fréquence (1x/semaine, 2x/semaine, etc.) |
+| budget_min | INTEGER | Budget minimum en FCFA |
+| budget_max | INTEGER | Budget maximum en FCFA |
+| statut | ENUM | ouverte, en_cours, fermee |
+| created_at | TIMESTAMP | Date de création |
+
+### Table `applications` (Candidatures)
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | UUID | Identifiant unique |
+| offer_id | UUID (FK offers) | Offre concernée |
+| repetiteur_id | UUID (FK profiles) | Répétiteur candidat |
+| message | TEXT | Message de présentation |
+| statut | ENUM | en_attente, acceptee, refusee |
+| created_at | TIMESTAMP | Date de candidature |
+
+### Politiques RLS
+
+- **Parents** : peuvent créer/modifier leurs propres offres
+- **Répétiteurs** : peuvent voir les offres ouvertes et leurs candidatures
+- **Admins** : accès complet à toutes les données
+
+---
+
+## Phase 2 : Interface Parent - Création d'Offres
+
+### Page `/mes-offres` pour les Parents
+
+**Fonctionnalités :**
+- Liste des offres créées par le Parent
+- Bouton "Nouvelle offre" ouvrant un formulaire
+- Statut de chaque offre (ouverte, en cours, fermée)
+- Nombre de candidatures reçues par offre
+
+### Formulaire de création d'offre
 
 ```text
 +-----------------------------------------------+
-|           Rejoignez Mon Répétiteur            |
-|    en tant que Parent ou Répétiteur           |
+|          Créer une offre de cours             |
 +-----------------------------------------------+
 |                                               |
-|  +------------------+  +------------------+   |
-|  |       👤         |  |       👨‍🏫         |   |
-|  |                  |  |                  |   |
-|  |  Je suis un      |  |  Je suis un      |   |
-|  |  parent, je      |  |  répétiteur      |   |
-|  |  recherche un    |  |  et je propose   |   |
-|  |  répétiteur      |  |  mes services    |   |
-|  |            ( )   |  |            ( )   |   |
-|  +------------------+  +------------------+   |
+|  Matière :        [Sélection v]               |
+|  (Mathématiques, Français, Anglais,           |
+|   Physique-Chimie, SVT, Histoire-Géo...)      |
 |                                               |
-|  [Formulaire d'inscription si sélection]      |
+|  Niveau scolaire : [Sélection v]              |
+|  (CP, CE1, CE2... Terminale)                  |
 |                                               |
+|  Description :                                |
+|  [                                          ] |
+|  [  Décrivez vos besoins...                 ] |
+|                                               |
+|  Adresse des cours :                          |
+|  [                                          ] |
+|                                               |
+|  Fréquence :       [Sélection v]              |
+|  (1x/sem, 2x/sem, 3x/sem, Tous les jours)     |
+|                                               |
+|  Budget (FCFA) :                              |
+|  Min [      ]  à  Max [      ]                |
+|                                               |
+|         [Publier l'offre]                     |
 +-----------------------------------------------+
+```
+
+### Gestion des candidatures
+
+- Liste des répétiteurs ayant postulé
+- Affichage du profil et message de chaque candidat
+- Boutons "Accepter" / "Refuser" pour chaque candidature
+
+---
+
+## Phase 3 : Interface Répétiteur - Consultation et Candidature
+
+### Page `/offres` pour les Répétiteurs
+
+**Fonctionnalités :**
+- Liste des offres ouvertes
+- Filtres par matière et niveau
+- Recherche par mot-clé
+- Détails de chaque offre avec bouton "Postuler"
+
+### Vue liste des offres
+
+```text
++-----------------------------------------------+
+|  Offres de cours disponibles                  |
++-----------------------------------------------+
+|  [Filtrer par matière v] [Filtrer par niveau v]  
+|                                               |
+|  +------------------------------------------+ |
+|  | Mathématiques - 3ème                     | |
+|  | Quartier Cocody, Abidjan                 | |
+|  | 2x par semaine • 15 000 - 25 000 FCFA    | |
+|  | Publié il y a 2 jours                    | |
+|  |                           [Voir détails] | |
+|  +------------------------------------------+ |
+|                                               |
+|  +------------------------------------------+ |
+|  | Français - CM2                           | |
+|  | Quartier Marcory, Abidjan                | |
+|  | 1x par semaine • 10 000 - 15 000 FCFA    | |
+|  | Publié il y a 5 jours                    | |
+|  |                           [Voir détails] | |
+|  +------------------------------------------+ |
++-----------------------------------------------+
+```
+
+### Modal de candidature
+
+```text
++-----------------------------------------------+
+|     Postuler à cette offre                    |
++-----------------------------------------------+
+|                                               |
+|  Mathématiques - 3ème                         |
+|  Quartier Cocody, Abidjan                     |
+|                                               |
+|  Votre message de présentation :              |
+|  [                                          ] |
+|  [  Présentez-vous et expliquez pourquoi    ] |
+|  [  vous êtes le répétiteur idéal...        ] |
+|                                               |
+|         [Envoyer ma candidature]              |
++-----------------------------------------------+
+```
+
+### Page "Mes candidatures"
+
+- Historique de toutes les candidatures envoyées
+- Statut de chaque candidature (en attente, acceptée, refusée)
+- Accès aux détails de l'offre
+
+---
+
+## Phase 4 : Dashboards adaptés par rôle
+
+### Dashboard Parent
+
+- Nombre d'offres actives
+- Nombre de candidatures en attente
+- Dernières candidatures reçues
+- Accès rapide à "Créer une offre"
+
+### Dashboard Répétiteur
+
+- Offres récentes correspondant à son profil
+- Statut des candidatures en cours
+- Accès rapide à "Voir les offres"
+
+### Dashboard Admin (mise à jour)
+
+- Statistiques globales des offres
+- Nombre total d'offres actives
+- Nombre de candidatures ce mois
+- Modération des offres si nécessaire
+
+---
+
+## Structure des fichiers à créer
+
+```text
+src/
+├── pages/
+│   ├── parent/
+│   │   ├── MesOffres.tsx        # Liste des offres du parent
+│   │   ├── NouvelleOffre.tsx    # Formulaire création
+│   │   └── OffreDetails.tsx     # Détail + candidatures
+│   └── repetiteur/
+│       ├── OffresDisponibles.tsx  # Liste offres ouvertes
+│       ├── MesCandidatures.tsx    # Mes candidatures
+│       └── OffreDetails.tsx       # Détail + postuler
+├── components/
+│   ├── offers/
+│   │   ├── OfferCard.tsx        # Carte d'offre réutilisable
+│   │   ├── OfferForm.tsx        # Formulaire création/édition
+│   │   ├── ApplicationCard.tsx  # Carte de candidature
+│   │   └── ApplicationForm.tsx  # Formulaire candidature
+│   └── layout/
+│       └── Sidebar.tsx          # (mise à jour navigation)
+└── lib/
+    └── validations.ts           # (ajout schémas Zod)
 ```
 
 ---
 
-## Modifications techniques
+## Mises à jour de la navigation
 
-### 1. Mise a jour du schema de validation (`src/lib/validations.ts`)
+### Sidebar mise à jour
 
-Ajouter un champ optionnel `userType` au schema d'inscription :
+**Pour les Parents :**
+- Tableau de bord
+- Mes offres
+- Mon profil
+
+**Pour les Répétiteurs :**
+- Tableau de bord
+- Offres disponibles
+- Mes candidatures
+- Mon profil
+
+**Pour les Admins :**
+- Tableau de bord
+- Utilisateurs
+- Répétiteurs
+- Parents
+- Offres (modération)
+- Mon profil
+
+---
+
+## Ordre d'exécution recommandé
+
+| Étape | Description | Priorité |
+|-------|-------------|----------|
+| 1 | Migration SQL (tables offers, applications + RLS) | Haute |
+| 2 | Schémas de validation Zod pour les formulaires | Haute |
+| 3 | Page Parent : Liste "Mes offres" | Haute |
+| 4 | Page Parent : Formulaire "Nouvelle offre" | Haute |
+| 5 | Page Répétiteur : Liste "Offres disponibles" | Haute |
+| 6 | Page Répétiteur : Formulaire de candidature | Haute |
+| 7 | Page Parent : Gestion des candidatures | Moyenne |
+| 8 | Page Répétiteur : "Mes candidatures" | Moyenne |
+| 9 | Mise à jour des dashboards par rôle | Moyenne |
+| 10 | Mise à jour de la sidebar dynamique | Moyenne |
+
+---
+
+## Détails techniques
+
+### Enums SQL pour les statuts
+
+```sql
+CREATE TYPE offer_status AS ENUM ('ouverte', 'en_cours', 'fermee');
+CREATE TYPE application_status AS ENUM ('en_attente', 'acceptee', 'refusee');
+```
+
+### Validation Zod pour le formulaire d'offre
 
 ```typescript
-export const signUpSchema = z.object({
-  fullName: z.string()
-    .min(2, "Le nom doit contenir au moins 2 caractères")
-    .max(100, "Le nom est trop long"),
-  phone: phoneSchema,
-  password: z.string()
-    .min(6, "Le mot de passe doit contenir au moins 6 caractères")
-    .max(72, "Le mot de passe est trop long"),
-  userType: z.enum(['client', 'prestataire']).optional(),
+const offerSchema = z.object({
+  matiere: z.string().min(1, "Sélectionnez une matière"),
+  niveau: z.string().min(1, "Sélectionnez un niveau"),
+  description: z.string()
+    .min(20, "Minimum 20 caractères")
+    .max(500, "Maximum 500 caractères"),
+  adresse: z.string().min(5, "Adresse requise"),
+  frequence: z.string().min(1, "Sélectionnez une fréquence"),
+  budget_min: z.number().min(1000, "Budget minimum 1000 FCFA"),
+  budget_max: z.number().min(1000, "Budget minimum 1000 FCFA"),
+}).refine(data => data.budget_max >= data.budget_min, {
+  message: "Le budget max doit être supérieur au budget min",
+  path: ["budget_max"],
 });
 ```
 
-### 2. Nouveau composant `UserTypeSelector` (`src/components/auth/UserTypeSelector.tsx`)
+### Sécurité RLS
 
-Composant reutilisable avec deux cartes cliquables :
-- **Card Parent** : Icone utilisateur, description "Je suis un parent, je recherche un repetiteur pour mon enfant"
-- **Card Repetiteur** : Icone professeur, description "Je suis un repetiteur et je propose mes services"
-- Radio button integre pour la selection
-- Animation de selection (bordure coloree, effet d'elevation)
-
-### 3. Modification de la page Auth (`src/pages/Auth.tsx`)
-
-**Nouveau flux d'inscription en deux etapes :**
-
-1. **Etape 1** : Selection du type d'utilisateur (Parent ou Repetiteur)
-   - Affichage des deux cartes
-   - Bouton "Continuer" desactive tant qu'aucune selection
-
-2. **Etape 2** : Formulaire d'inscription classique
-   - Nom complet
-   - Numero de telephone
-   - Mot de passe
-   - Bouton retour pour changer de type
-
-**Logique de transmission du role :**
-- Le type selectionne sera transmis via `user_metadata` lors de l'inscription
-- Le trigger `handle_new_user()` utilisera cette information au lieu du role par defaut
-
-### 4. Mise a jour du trigger SQL (migration)
-
-Modifier la fonction `handle_new_user()` pour lire le type d'utilisateur depuis les metadonnees :
-
-```sql
--- Dans handle_new_user():
-_user_type := COALESCE(
-  NEW.raw_user_meta_data->>'user_type', 
-  'client'
-)::public.app_role;
-
--- Assigner le role en fonction du type choisi
-IF _is_first_user THEN
-  INSERT INTO public.user_roles (user_id, role)
-  VALUES (NEW.id, 'super_admin');
-ELSE
-  INSERT INTO public.user_roles (user_id, role)
-  VALUES (NEW.id, _user_type);
-END IF;
-```
+Les politiques RLS garantiront que :
+- Un Parent ne peut modifier que ses propres offres
+- Un Répétiteur ne peut voir que les offres ouvertes
+- Un Répétiteur ne peut pas postuler à sa propre offre
+- Seuls les Admins peuvent supprimer des offres
 
 ---
 
-## Structure des fichiers
+## Prochaines étapes après cette phase
 
-| Fichier | Action |
-|---------|--------|
-| `src/components/auth/UserTypeSelector.tsx` | Creer |
-| `src/pages/Auth.tsx` | Modifier |
-| `src/lib/validations.ts` | Modifier |
-| Migration SQL | Creer |
-
----
-
-## Details visuels
-
-**Style des cartes de selection :**
-- Fond blanc avec bordure gris clair
-- Au survol : ombre legere
-- Selection : bordure orange (primary), fond orange tres leger
-- Radio button en haut a droite de chaque carte
-- Icones Lucide : `Users` pour parent, `GraduationCap` pour repetiteur
-
-**Couleurs utilisees :**
-- Bordure selection : `border-primary` (orange)
-- Fond selection : `bg-primary/5`
-- Texte description : `text-muted-foreground`
-
----
-
-## Experience utilisateur
-
-1. L'utilisateur arrive sur l'onglet "Inscription"
-2. Il voit les deux cartes de selection
-3. Il clique sur "Parent" ou "Repetiteur"
-4. Le formulaire d'inscription apparait avec un indicateur du type choisi
-5. Il remplit le formulaire et soumet
-6. Le compte est cree avec le role correspondant
-
-**Note importante :** Le premier utilisateur reste automatiquement Super Admin, independamment de son choix de type.
-
+Une fois le système d'offres fonctionnel, les prochaines fonctionnalités à implémenter seront :
+1. **Profil Répétiteur enrichi** (matières, niveaux, disponibilités, biographie)
+2. **Système de contrats numériques** (après acceptation d'une candidature)
+3. **Messagerie interne** (chat entre Parent et Répétiteur)
+4. **Système de notation** (évaluation après fin de contrat)
+5. **Abonnements Répétiteurs** (limites de candidatures)
