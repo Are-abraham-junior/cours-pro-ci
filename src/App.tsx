@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 
 // Pages
 import Auth from "./pages/Auth";
-import Dashboard from "./pages/admin/Dashboard";
+import AdminDashboard from "./pages/admin/Dashboard";
 import Users from "./pages/admin/Users";
 import Prestataires from "./pages/admin/Prestataires";
 import Clients from "./pages/admin/Clients";
@@ -17,20 +17,22 @@ import Profile from "./pages/admin/Profile";
 import NotFound from "./pages/NotFound";
 
 // Parent pages
+import ParentDashboard from "./pages/parent/Dashboard";
 import MesOffres from "./pages/parent/MesOffres";
 import NouvelleOffre from "./pages/parent/NouvelleOffre";
 import OffreDetailsParent from "./pages/parent/OffreDetails";
 
 // Répétiteur pages
+import RepetiteurDashboard from "./pages/repetiteur/Dashboard";
 import OffresDisponibles from "./pages/repetiteur/OffresDisponibles";
 import OffreDetailsRepetiteur from "./pages/repetiteur/OffreDetails";
 import MesCandidatures from "./pages/repetiteur/MesCandidatures";
 
 const queryClient = new QueryClient();
 
-// Composant de redirection basé sur l'authentification
+// Composant de redirection basé sur l'authentification et le rôle
 function HomeRedirect() {
-  const { user, loading } = useAuth();
+  const { user, loading, roles } = useAuth();
 
   if (loading) {
     return (
@@ -44,12 +46,21 @@ function HomeRedirect() {
     return <Navigate to="/auth" replace />;
   }
 
-  return <Navigate to="/dashboard" replace />;
+  // Redirect based on role
+  if (roles.includes('super_admin') || roles.includes('admin')) {
+    return <Navigate to="/admin/dashboard" replace />;
+  } else if (roles.includes('client')) {
+    return <Navigate to="/parent/dashboard" replace />;
+  } else if (roles.includes('prestataire')) {
+    return <Navigate to="/repetiteur/dashboard" replace />;
+  }
+
+  return <Navigate to="/auth" replace />;
 }
 
 // Composant pour rediriger les utilisateurs connectés
 function AuthRedirect() {
-  const { user, loading } = useAuth();
+  const { user, loading, roles } = useAuth();
 
   if (loading) {
     return (
@@ -60,7 +71,14 @@ function AuthRedirect() {
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    // Redirect based on role
+    if (roles.includes('super_admin') || roles.includes('admin')) {
+      return <Navigate to="/admin/dashboard" replace />;
+    } else if (roles.includes('client')) {
+      return <Navigate to="/parent/dashboard" replace />;
+    } else if (roles.includes('prestataire')) {
+      return <Navigate to="/repetiteur/dashboard" replace />;
+    }
   }
 
   return <Auth />;
@@ -80,15 +98,17 @@ const App = () => (
             {/* Redirection de la page d'accueil */}
             <Route path="/" element={<HomeRedirect />} />
 
-            {/* Routes protégées - Dashboard */}
+            {/* Routes Admin - Dashboard */}
             <Route
-              path="/dashboard"
+              path="/admin/dashboard"
               element={
-                <ProtectedRoute>
-                  <Dashboard />
+                <ProtectedRoute requiredRoles={['super_admin', 'admin']}>
+                  <AdminDashboard />
                 </ProtectedRoute>
               }
             />
+            {/* Redirect old /dashboard to role-based dashboard */}
+            <Route path="/dashboard" element={<HomeRedirect />} />
 
             {/* Routes protégées - Gestion utilisateurs (admin only) */}
             <Route
@@ -130,7 +150,15 @@ const App = () => (
               }
             />
 
-            {/* Routes Parent - Gestion des offres */}
+            {/* Routes Parent */}
+            <Route
+              path="/parent/dashboard"
+              element={
+                <ProtectedRoute requiredRoles={['client']}>
+                  <ParentDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/mes-offres"
               element={
@@ -156,7 +184,15 @@ const App = () => (
               }
             />
 
-            {/* Routes Répétiteur - Consultation offres et candidatures */}
+            {/* Routes Répétiteur */}
+            <Route
+              path="/repetiteur/dashboard"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <RepetiteurDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/offres"
               element={

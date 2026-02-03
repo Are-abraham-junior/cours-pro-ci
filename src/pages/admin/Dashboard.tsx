@@ -13,6 +13,10 @@ interface Stats {
   prestataires: number;
   clients: number;
   admins: number;
+  totalOffers: number;
+  openOffers: number;
+  totalApplications: number;
+  pendingApplications: number;
 }
 
 interface RecentUser {
@@ -25,7 +29,16 @@ interface RecentUser {
 
 export default function Dashboard() {
   const { profile, roles } = useAuth();
-  const [stats, setStats] = useState<Stats>({ totalUsers: 0, prestataires: 0, clients: 0, admins: 0 });
+  const [stats, setStats] = useState<Stats>({
+    totalUsers: 0,
+    prestataires: 0,
+    clients: 0,
+    admins: 0,
+    totalOffers: 0,
+    openOffers: 0,
+    totalApplications: 0,
+    pendingApplications: 0,
+  });
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,11 +73,33 @@ export default function Dashboard() {
           }
         });
 
+        // Fetch offers stats
+        const { data: offers, error: offersError } = await supabase
+          .from('offers')
+          .select('id, statut');
+
+        if (offersError) throw offersError;
+
+        const openOffers = offers?.filter(o => o.statut === 'ouverte').length || 0;
+
+        // Fetch applications stats
+        const { data: applications, error: appsError } = await supabase
+          .from('applications')
+          .select('id, statut');
+
+        if (appsError) throw appsError;
+
+        const pendingApplications = applications?.filter(a => a.statut === 'en_attente').length || 0;
+
         setStats({
           totalUsers: profiles?.length || 0,
           prestataires: roleCounts.prestataire,
           clients: roleCounts.client,
           admins: roleCounts.admin + roleCounts.super_admin,
+          totalOffers: offers?.length || 0,
+          openOffers,
+          totalApplications: applications?.length || 0,
+          pendingApplications,
         });
 
         // Récupérer les derniers utilisateurs inscrits avec leurs rôles
@@ -99,6 +134,10 @@ export default function Dashboard() {
     { label: 'Répétiteurs', value: stats.prestataires, icon: GraduationCap, color: 'text-emerald-500' },
     { label: 'Parents', value: stats.clients, icon: Home, color: 'text-violet-500' },
     { label: 'Administrateurs', value: stats.admins, icon: BookOpen, color: 'text-secondary' },
+    { label: 'Total Offres', value: stats.totalOffers, icon: BookOpen, color: 'text-amber-500' },
+    { label: 'Offres ouvertes', value: stats.openOffers, icon: BookOpen, color: 'text-emerald-500' },
+    { label: 'Total Candidatures', value: stats.totalApplications, icon: Users, color: 'text-primary' },
+    { label: 'En attente', value: stats.pendingApplications, icon: Users, color: 'text-amber-500' },
   ];
 
   if (loading) {
