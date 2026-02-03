@@ -26,15 +26,17 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
   // Admin items
+  { label: 'Tableau de bord', href: '/admin/dashboard', icon: LayoutDashboard, roles: ['super_admin', 'admin'] },
   { label: 'Utilisateurs', href: '/users', icon: Users, roles: ['super_admin', 'admin'] },
   { label: 'Répétiteurs', href: '/prestataires', icon: GraduationCap, roles: ['super_admin', 'admin'] },
   { label: 'Parents', href: '/clients', icon: Home, roles: ['super_admin', 'admin'] },
   { label: 'Toutes les offres', href: '/admin/offres', icon: Briefcase, roles: ['super_admin', 'admin'] },
   // Parent items
+  { label: 'Tableau de bord', href: '/parent/dashboard', icon: LayoutDashboard, roles: ['client'] },
   { label: 'Mes offres', href: '/mes-offres', icon: FileText, roles: ['client'] },
   // Répétiteur items
+  { label: 'Tableau de bord', href: '/repetiteur/dashboard', icon: LayoutDashboard, roles: ['prestataire'] },
   { label: 'Offres disponibles', href: '/offres', icon: Briefcase, roles: ['prestataire'] },
   { label: 'Mes candidatures', href: '/mes-candidatures', icon: Send, roles: ['prestataire'] },
 ];
