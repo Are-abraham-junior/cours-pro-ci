@@ -44,6 +44,29 @@ export const FREQUENCES = [
   'À la demande',
 ] as const;
 
+// Disponibilités
+export const DISPONIBILITES = [
+  'Lundi matin',
+  'Lundi après-midi',
+  'Lundi soir',
+  'Mardi matin',
+  'Mardi après-midi',
+  'Mardi soir',
+  'Mercredi matin',
+  'Mercredi après-midi',
+  'Mercredi soir',
+  'Jeudi matin',
+  'Jeudi après-midi',
+  'Jeudi soir',
+  'Vendredi matin',
+  'Vendredi après-midi',
+  'Vendredi soir',
+  'Samedi matin',
+  'Samedi après-midi',
+  'Dimanche matin',
+  'Dimanche après-midi',
+] as const;
+
 // Statuts des offres
 export const OFFER_STATUS_LABELS = {
   ouverte: 'Ouverte',
@@ -61,5 +84,6 @@ export const APPLICATION_STATUS_LABELS = {
 export type Matiere = typeof MATIERES[number];
 export type Niveau = typeof NIVEAUX[number];
 export type Frequence = typeof FREQUENCES[number];
+export type Disponibilite = typeof DISPONIBILITES[number];
 export type OfferStatus = keyof typeof OFFER_STATUS_LABELS;
 export type ApplicationStatus = keyof typeof APPLICATION_STATUS_LABELS;

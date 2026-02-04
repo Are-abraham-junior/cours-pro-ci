@@ -115,29 +115,53 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string
+          disponibilites: string[] | null
+          experience_annees: number | null
           full_name: string
           id: string
           is_active: boolean
+          localisation: string | null
+          matieres: string[] | null
+          niveaux: string[] | null
           phone: string
+          profil_complet: boolean | null
+          tarif_horaire: number | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          disponibilites?: string[] | null
+          experience_annees?: number | null
           full_name: string
           id: string
           is_active?: boolean
+          localisation?: string | null
+          matieres?: string[] | null
+          niveaux?: string[] | null
           phone: string
+          profil_complet?: boolean | null
+          tarif_horaire?: number | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          disponibilites?: string[] | null
+          experience_annees?: number | null
           full_name?: string
           id?: string
           is_active?: boolean
+          localisation?: string | null
+          matieres?: string[] | null
+          niveaux?: string[] | null
           phone?: string
+          profil_complet?: boolean | null
+          tarif_horaire?: number | null
           updated_at?: string
         }
         Relationships: []
