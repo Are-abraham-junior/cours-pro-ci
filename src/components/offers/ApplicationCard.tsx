@@ -2,11 +2,27 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { APPLICATION_STATUS_LABELS, ApplicationStatus } from '@/lib/constants';
 import { cn } from '@/lib/utils';
-import { Check, X, Clock } from 'lucide-react';
+import { Check, X, Clock, ChevronDown, MapPin, Briefcase, GraduationCap, Banknote } from 'lucide-react';
+import { useState } from 'react';
+
+interface RepetiteurProfile {
+  id: string;
+  full_name: string;
+  avatar_url?: string | null;
+  phone: string;
+  bio?: string | null;
+  matieres?: string[] | null;
+  niveaux?: string[] | null;
+  localisation?: string | null;
+  tarif_horaire?: number | null;
+  experience_annees?: number | null;
+  profil_complet?: boolean;
+}
 
 interface ApplicationCardProps {
   application: {
@@ -14,12 +30,7 @@ interface ApplicationCardProps {
     message: string;
     statut: ApplicationStatus;
     created_at: string;
-    repetiteur?: {
-      id: string;
-      full_name: string;
-      avatar_url?: string | null;
-      phone: string;
-    };
+    repetiteur?: RepetiteurProfile;
     offer?: {
       id: string;
       matiere: string;
@@ -34,9 +45,9 @@ interface ApplicationCardProps {
 }
 
 const statusColors: Record<ApplicationStatus, string> = {
-  en_attente: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-  acceptee: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  refusee: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  en_attente: 'bg-secondary text-secondary-foreground',
+  acceptee: 'bg-primary/10 text-primary',
+  refusee: 'bg-destructive/10 text-destructive',
 };
 
 const statusIcons: Record<ApplicationStatus, React.ReactNode> = {
@@ -53,6 +64,8 @@ export function ApplicationCard({
   onViewOffer,
   isLoading = false,
 }: ApplicationCardProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -62,25 +75,49 @@ export function ApplicationCard({
       .slice(0, 2);
   };
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+  };
+
+  const repetiteur = application.repetiteur;
+  const hasEnrichedProfile = repetiteur && (
+    repetiteur.bio || 
+    (repetiteur.matieres && repetiteur.matieres.length > 0) ||
+    (repetiteur.niveaux && repetiteur.niveaux.length > 0) ||
+    repetiteur.localisation ||
+    repetiteur.experience_annees
+  );
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-3">
-          {variant === 'parent' && application.repetiteur && (
+          {variant === 'parent' && repetiteur && (
             <div className="flex items-center gap-3">
-              <Avatar>
-                <AvatarImage src={application.repetiteur.avatar_url || undefined} />
-                <AvatarFallback>
-                  {getInitials(application.repetiteur.full_name)}
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={repetiteur.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                  {getInitials(repetiteur.full_name)}
                 </AvatarFallback>
               </Avatar>
               <div>
-                <p className="font-medium text-foreground">
-                  {application.repetiteur.full_name}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-foreground">
+                    {repetiteur.full_name}
+                  </p>
+                  {repetiteur.profil_complet && (
+                    <Badge variant="outline" className="text-xs">Profil complet</Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  {application.repetiteur.phone}
+                  {repetiteur.phone}
                 </p>
+                {repetiteur.experience_annees && repetiteur.experience_annees > 0 && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                    <Briefcase className="h-3 w-3" />
+                    {repetiteur.experience_annees} an{repetiteur.experience_annees > 1 ? 's' : ''} d'expérience
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -100,11 +137,86 @@ export function ApplicationCard({
         </div>
       </CardHeader>
 
-      <CardContent>
-        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-          {application.message}
-        </p>
-        <p className="text-xs text-muted-foreground mt-2">
+      <CardContent className="space-y-3">
+        {/* Message de candidature */}
+        <div>
+          <p className="text-sm font-medium text-foreground mb-1">Message de candidature</p>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+            {application.message}
+          </p>
+        </div>
+
+        {/* Infos enrichies du répétiteur - Vue parent uniquement */}
+        {variant === 'parent' && hasEnrichedProfile && (
+          <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full justify-between">
+                <span className="text-sm">Voir le profil détaillé</span>
+                <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-3 pt-3 border-t mt-3">
+              {/* Bio */}
+              {repetiteur?.bio && (
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-1">Présentation</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {repetiteur.bio}
+                  </p>
+                </div>
+              )}
+
+              {/* Localisation et tarif */}
+              <div className="flex flex-wrap gap-4">
+                {repetiteur?.localisation && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span>{repetiteur.localisation}</span>
+                  </div>
+                )}
+                {repetiteur?.tarif_horaire && repetiteur.tarif_horaire > 0 && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Banknote className="h-4 w-4" />
+                    <span>{formatCurrency(repetiteur.tarif_horaire)}/h</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Matières */}
+              {repetiteur?.matieres && repetiteur.matieres.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-1">
+                    <GraduationCap className="h-4 w-4" />
+                    Matières enseignées
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {repetiteur.matieres.map((matiere) => (
+                      <Badge key={matiere} variant="secondary" className="text-xs">
+                        {matiere}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Niveaux */}
+              {repetiteur?.niveaux && repetiteur.niveaux.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-foreground mb-2">Niveaux</p>
+                  <div className="flex flex-wrap gap-1">
+                    {repetiteur.niveaux.map((niveau) => (
+                      <Badge key={niveau} variant="outline" className="text-xs">
+                        {niveau}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+
+        <p className="text-xs text-muted-foreground">
           Envoyée {formatDistanceToNow(new Date(application.created_at), {
             addSuffix: true,
             locale: fr,

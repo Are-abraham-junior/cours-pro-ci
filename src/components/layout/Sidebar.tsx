@@ -103,7 +103,7 @@ export function Sidebar() {
       {/* Footer - User info */}
       <div className="p-4 border-t border-sidebar-border">
         <Link
-          to="/profile"
+          to={roles.includes('prestataire') ? '/repetiteur/profil' : '/profile'}
           onClick={() => setMobileOpen(false)}
           className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-sidebar-accent transition-colors"
         >

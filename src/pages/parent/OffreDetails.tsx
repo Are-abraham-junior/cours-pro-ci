@@ -42,13 +42,20 @@ interface Application {
     full_name: string;
     avatar_url: string | null;
     phone: string;
+    bio?: string | null;
+    matieres?: string[] | null;
+    niveaux?: string[] | null;
+    localisation?: string | null;
+    tarif_horaire?: number | null;
+    experience_annees?: number | null;
+    profil_complet?: boolean;
   };
 }
 
 const statusColors: Record<OfferStatus, string> = {
-  ouverte: 'bg-green-100 text-green-800',
-  en_cours: 'bg-blue-100 text-blue-800',
-  fermee: 'bg-gray-100 text-gray-800',
+  ouverte: 'bg-primary/10 text-primary',
+  en_cours: 'bg-secondary text-secondary-foreground',
+  fermee: 'bg-muted text-muted-foreground',
 };
 
 export default function OffreDetails() {
@@ -96,12 +103,12 @@ export default function OffreDetails() {
 
       if (applicationsError) throw applicationsError;
 
-      // Fetch profiles for each application
+      // Fetch profiles for each application with enriched fields
       const applicationsWithProfiles: Application[] = await Promise.all(
         (applicationsData || []).map(async (app) => {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('id, full_name, avatar_url, phone')
+            .select('id, full_name, avatar_url, phone, bio, matieres, niveaux, localisation, tarif_horaire, experience_annees, profil_complet')
             .eq('id', app.repetiteur_id)
             .single();
 
