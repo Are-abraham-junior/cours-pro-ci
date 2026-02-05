@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { RoleBadge } from '@/components/users/RoleBadge';
 import { RepetiteurProfileForm } from '@/components/profile/RepetiteurProfileForm';
+import { AvatarUpload } from '@/components/profile/AvatarUpload';
 import { Loader2, User, Phone, Calendar, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -151,20 +152,19 @@ export default function RepetiteurProfile() {
                   Ces informations ne peuvent pas être modifiées
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-primary font-bold text-3xl">
-                      {profile.full_name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-xl">{profile.full_name}</h3>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {roles.map(role => (
-                        <RoleBadge key={role} role={role} size="sm" />
-                      ))}
-                    </div>
+              <CardContent className="space-y-6">
+                {/* Photo de profil */}
+                <AvatarUpload 
+                  currentAvatarUrl={profile.avatar_url} 
+                  size="lg"
+                />
+
+                <div className="text-center">
+                  <h3 className="font-semibold text-xl">{profile.full_name}</h3>
+                  <div className="flex flex-wrap justify-center gap-1 mt-2">
+                    {roles.map(role => (
+                      <RoleBadge key={role} role={role} size="sm" />
+                    ))}
                   </div>
                 </div>
 
