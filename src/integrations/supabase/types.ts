@@ -59,6 +59,92 @@ export type Database = {
           },
         ]
       }
+      contracts: {
+        Row: {
+          adresse: string
+          application_id: string
+          created_at: string
+          date_debut: string
+          date_fin: string | null
+          frequence: string
+          id: string
+          matiere: string
+          niveau: string
+          notes: string | null
+          offer_id: string
+          parent_id: string
+          repetiteur_id: string
+          statut: Database["public"]["Enums"]["contract_status"]
+          tarif_convenu: number | null
+          updated_at: string
+        }
+        Insert: {
+          adresse: string
+          application_id: string
+          created_at?: string
+          date_debut?: string
+          date_fin?: string | null
+          frequence: string
+          id?: string
+          matiere: string
+          niveau: string
+          notes?: string | null
+          offer_id: string
+          parent_id: string
+          repetiteur_id: string
+          statut?: Database["public"]["Enums"]["contract_status"]
+          tarif_convenu?: number | null
+          updated_at?: string
+        }
+        Update: {
+          adresse?: string
+          application_id?: string
+          created_at?: string
+          date_debut?: string
+          date_fin?: string | null
+          frequence?: string
+          id?: string
+          matiere?: string
+          niveau?: string
+          notes?: string | null
+          offer_id?: string
+          parent_id?: string
+          repetiteur_id?: string
+          statut?: Database["public"]["Enums"]["contract_status"]
+          tarif_convenu?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: true
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_offer_id_fkey"
+            columns: ["offer_id"]
+            isOneToOne: false
+            referencedRelation: "offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_repetiteur_id_fkey"
+            columns: ["repetiteur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offers: {
         Row: {
           adresse: string
@@ -206,6 +292,7 @@ export type Database = {
     Enums: {
       app_role: "super_admin" | "admin" | "prestataire" | "client"
       application_status: "en_attente" | "acceptee" | "refusee"
+      contract_status: "actif" | "termine" | "annule"
       offer_status: "ouverte" | "en_cours" | "fermee"
     }
     CompositeTypes: {
@@ -336,6 +423,7 @@ export const Constants = {
     Enums: {
       app_role: ["super_admin", "admin", "prestataire", "client"],
       application_status: ["en_attente", "acceptee", "refusee"],
+      contract_status: ["actif", "termine", "annule"],
       offer_status: ["ouverte", "en_cours", "fermee"],
     },
   },

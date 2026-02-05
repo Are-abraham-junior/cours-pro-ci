@@ -15,6 +15,7 @@ import {
   FileText,
   Send,
   Briefcase,
+  FileCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -35,10 +36,12 @@ const navItems: NavItem[] = [
   // Parent items
   { label: 'Tableau de bord', href: '/parent/dashboard', icon: LayoutDashboard, roles: ['client'] },
   { label: 'Mes offres', href: '/mes-offres', icon: FileText, roles: ['client'] },
+  { label: 'Mes contrats', href: '/mes-contrats', icon: FileCheck, roles: ['client'] },
   // Répétiteur items
   { label: 'Tableau de bord', href: '/repetiteur/dashboard', icon: LayoutDashboard, roles: ['prestataire'] },
   { label: 'Offres disponibles', href: '/offres', icon: Briefcase, roles: ['prestataire'] },
   { label: 'Mes candidatures', href: '/mes-candidatures', icon: Send, roles: ['prestataire'] },
+  { label: 'Mes contrats', href: '/repetiteur/contrats', icon: FileCheck, roles: ['prestataire'] },
 ];
 
 export function Sidebar() {

@@ -21,6 +21,7 @@ import ParentDashboard from "./pages/parent/Dashboard";
 import MesOffres from "./pages/parent/MesOffres";
 import NouvelleOffre from "./pages/parent/NouvelleOffre";
 import OffreDetailsParent from "./pages/parent/OffreDetails";
+import MesContratsParent from "./pages/parent/MesContrats";
 
 // Répétiteur pages
 import RepetiteurDashboard from "./pages/repetiteur/Dashboard";
@@ -28,6 +29,7 @@ import RepetiteurProfile from "./pages/repetiteur/Profile";
 import OffresDisponibles from "./pages/repetiteur/OffresDisponibles";
 import OffreDetailsRepetiteur from "./pages/repetiteur/OffreDetails";
 import MesCandidatures from "./pages/repetiteur/MesCandidatures";
+import MesContratsRepetiteur from "./pages/repetiteur/MesContrats";
 
 const queryClient = new QueryClient();
 
@@ -184,6 +186,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/mes-contrats"
+              element={
+                <ProtectedRoute requiredRoles={['client']}>
+                  <MesContratsParent />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Routes Répétiteur */}
             <Route
@@ -223,6 +233,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRoles={['prestataire']}>
                   <RepetiteurProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/repetiteur/contrats"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <MesContratsRepetiteur />
                 </ProtectedRoute>
               }
             />
