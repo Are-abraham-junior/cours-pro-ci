@@ -5,7 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Loader2, Upload, Trash2, FileText, Download, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Loader2, Upload, Trash2, FileText, Download, Eye, X } from 'lucide-react';
 
 interface DiplomaFile {
   name: string;
@@ -19,6 +20,7 @@ export function DiplomaUpload() {
   const [uploading, setUploading] = useState(false);
   const [diplomas, setDiplomas] = useState<DiplomaFile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewFile, setPreviewFile] = useState<DiplomaFile | null>(null);
 
   const fetchDiplomas = async () => {
     if (!profile) return;
@@ -67,7 +69,6 @@ export function DiplomaUpload() {
 
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
       const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
       const filePath = `${profile.id}/${fileName}`;
 
@@ -99,6 +100,7 @@ export function DiplomaUpload() {
   };
 
   const isPdf = (name: string) => name.toLowerCase().endsWith('.pdf');
+  const displayName = (name: string) => name.replace(/^\d+_/, '');
 
   return (
     <div className="space-y-4">
@@ -130,29 +132,35 @@ export function DiplomaUpload() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {diplomas.map((diploma) => (
-            <Card key={diploma.name} className="overflow-hidden">
+            <Card key={diploma.name} className="overflow-hidden group cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => setPreviewFile(diploma)}>
               <CardContent className="p-3">
                 <div className="flex items-start gap-3">
                   {isPdf(diploma.name) ? (
-                    <div className="h-16 w-16 rounded bg-muted flex items-center justify-center shrink-0">
-                      <FileText className="h-8 w-8 text-muted-foreground" />
+                    <div className="h-20 w-20 rounded bg-muted flex items-center justify-center shrink-0">
+                      <FileText className="h-10 w-10 text-muted-foreground" />
                     </div>
                   ) : (
                     <img
                       src={diploma.url}
-                      alt={diploma.name}
-                      className="h-16 w-16 rounded object-cover shrink-0"
+                      alt={displayName(diploma.name)}
+                      className="h-20 w-20 rounded object-cover shrink-0"
                     />
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{diploma.name.replace(/^\d+_/, '')}</p>
+                    <p className="text-sm font-medium truncate">{displayName(diploma.name)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Cliquez pour visualiser
+                    </p>
                     <div className="flex gap-1 mt-2">
-                      <Button size="sm" variant="ghost" className="h-7 px-2" asChild>
-                        <a href={diploma.url} target="_blank" rel="noopener noreferrer">
-                          {isPdf(diploma.name) ? <Download className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={(e) => { e.stopPropagation(); setPreviewFile(diploma); }}>
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 px-2" asChild onClick={(e) => e.stopPropagation()}>
+                        <a href={diploma.url} download target="_blank" rel="noopener noreferrer">
+                          <Download className="h-3.5 w-3.5" />
                         </a>
                       </Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:text-destructive" onClick={() => handleDelete(diploma.name)}>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:text-destructive" onClick={(e) => { e.stopPropagation(); handleDelete(diploma.name); }}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -163,6 +171,45 @@ export function DiplomaUpload() {
           ))}
         </div>
       )}
+
+      {/* Preview Dialog */}
+      <Dialog open={!!previewFile} onOpenChange={(open) => !open && setPreviewFile(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+          <DialogTitle className="sr-only">
+            {previewFile ? displayName(previewFile.name) : 'Aperçu du diplôme'}
+          </DialogTitle>
+          {previewFile && (
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="font-semibold truncate pr-4">{displayName(previewFile.name)}</h3>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={previewFile.url} download target="_blank" rel="noopener noreferrer">
+                      <Download className="mr-2 h-4 w-4" />
+                      Télécharger
+                    </a>
+                  </Button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/30 min-h-[60vh]">
+                {isPdf(previewFile.name) ? (
+                  <iframe
+                    src={previewFile.url}
+                    className="w-full h-[75vh] rounded border"
+                    title={displayName(previewFile.name)}
+                  />
+                ) : (
+                  <img
+                    src={previewFile.url}
+                    alt={displayName(previewFile.name)}
+                    className="max-w-full max-h-[75vh] object-contain rounded shadow-lg"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
