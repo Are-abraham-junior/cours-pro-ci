@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { RoleBadge } from '@/components/users/RoleBadge';
 import { RepetiteurProfileForm } from '@/components/profile/RepetiteurProfileForm';
 import { AvatarUpload } from '@/components/profile/AvatarUpload';
+import { DiplomaUpload } from '@/components/profile/DiplomaUpload';
 import { Loader2, User, Phone, Calendar, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -128,14 +129,30 @@ export default function RepetiteurProfile() {
       </Card>
 
       <Tabs defaultValue="competences" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="competences">Compétences & Disponibilités</TabsTrigger>
-          <TabsTrigger value="infos">Informations personnelles</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="competences">Compétences</TabsTrigger>
+          <TabsTrigger value="diplomes">Diplômes</TabsTrigger>
+          <TabsTrigger value="infos">Infos personnelles</TabsTrigger>
         </TabsList>
 
         {/* Onglet Compétences */}
         <TabsContent value="competences">
           <RepetiteurProfileForm />
+        </TabsContent>
+
+        {/* Onglet Diplômes */}
+        <TabsContent value="diplomes">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mes diplômes et certifications</CardTitle>
+              <CardDescription>
+                Téléchargez vos diplômes pour renforcer la confiance des parents
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DiplomaUpload />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Onglet Infos personnelles */}
