@@ -193,11 +193,27 @@ export function DiplomaUpload() {
               </div>
               <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/30 min-h-[60vh]">
                 {isPdf(previewFile.name) ? (
-                  <iframe
-                    src={previewFile.url}
-                    className="w-full h-[75vh] rounded border"
-                    title={displayName(previewFile.name)}
-                  />
+                  <div className="flex flex-col items-center gap-6 py-12">
+                    <FileText className="h-20 w-20 text-muted-foreground" />
+                    <p className="text-muted-foreground text-center">
+                      L'aperçu PDF n'est pas disponible dans le navigateur.<br />
+                      Utilisez le bouton ci-dessous pour le consulter.
+                    </p>
+                    <div className="flex gap-3">
+                      <Button asChild>
+                        <a href={previewFile.url} target="_blank" rel="noopener noreferrer">
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ouvrir le PDF
+                        </a>
+                      </Button>
+                      <Button variant="outline" asChild>
+                        <a href={previewFile.url} download target="_blank" rel="noopener noreferrer">
+                          <Download className="mr-2 h-4 w-4" />
+                          Télécharger
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
                   <img
                     src={previewFile.url}
