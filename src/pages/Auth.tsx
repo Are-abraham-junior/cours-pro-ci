@@ -110,8 +110,8 @@ export default function Auth() {
       console.error('Sign in error:', error);
       toast({
         title: "Erreur de connexion",
-        description: error.message === 'Invalid login credentials' 
-          ? "Numéro ou mot de passe incorrect" 
+        description: error.message === 'Invalid login credentials'
+          ? "Numéro ou mot de passe incorrect"
           : error.message,
         variant: "destructive",
       });

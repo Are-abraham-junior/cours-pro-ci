@@ -14,6 +14,7 @@ import Users from "./pages/admin/Users";
 import Prestataires from "./pages/admin/Prestataires";
 import Clients from "./pages/admin/Clients";
 import Profile from "./pages/admin/Profile";
+import AdminOffres from "./pages/admin/AdminOffres";
 import NotFound from "./pages/NotFound";
 
 // Parent pages
@@ -139,6 +140,16 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRoles={['super_admin', 'admin']}>
                   <Clients />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Routes protégées - Toutes les offres (admin only) */}
+            <Route
+              path="/admin/offres"
+              element={
+                <ProtectedRoute requiredRoles={['super_admin', 'admin']}>
+                  <AdminOffres />
                 </ProtectedRoute>
               }
             />

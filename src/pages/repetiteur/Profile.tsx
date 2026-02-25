@@ -16,6 +16,7 @@ import { RoleBadge } from '@/components/users/RoleBadge';
 import { RepetiteurProfileForm } from '@/components/profile/RepetiteurProfileForm';
 import { AvatarUpload } from '@/components/profile/AvatarUpload';
 import { DiplomaUpload } from '@/components/profile/DiplomaUpload';
+import { CniUpload } from '@/components/profile/CniUpload';
 import { Loader2, User, Phone, Calendar, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -91,7 +92,7 @@ export default function RepetiteurProfile() {
   };
 
   return (
-    <DashboardLayout 
+    <DashboardLayout
       title="Mon Profil"
       description="Gérez votre profil de répétiteur"
     >
@@ -171,8 +172,8 @@ export default function RepetiteurProfile() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Photo de profil */}
-                <AvatarUpload 
-                  currentAvatarUrl={profile.avatar_url} 
+                <AvatarUpload
+                  currentAvatarUrl={profile.avatar_url}
                   size="lg"
                 />
 
@@ -292,6 +293,22 @@ export default function RepetiteurProfile() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Section CNI */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" /></svg>
+                Pièce d'identité (CNI)
+              </CardTitle>
+              <CardDescription>
+                Téléchargez le recto et le verso de votre Carte Nationale d'Identité
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CniUpload />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </DashboardLayout>

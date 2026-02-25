@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Briefcase, Send, Clock, CheckCircle, Loader2, ArrowRight, MapPin } from 'lucide-react';
+import { Briefcase, Send, Clock, CheckCircle, Loader2, ArrowRight, MapPin, AlertCircle, ShieldCheck, FileWarning } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { APPLICATION_STATUS_LABELS } from '@/lib/constants';
@@ -50,6 +50,7 @@ export default function RepetiteurDashboard() {
   const [recentOffers, setRecentOffers] = useState<RecentOffer[]>([]);
   const [myApplications, setMyApplications] = useState<MyApplication[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasDocuments, setHasDocuments] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -110,6 +111,15 @@ export default function RepetiteurDashboard() {
 
         if (offersError) throw offersError;
 
+        // Vérifier si des documents ont été uploadés (diplômes ou CNI)
+        const [diplomasRes, cniRes] = await Promise.all([
+          supabase.storage.from('diplomas').list(`${user.id}/`),
+          supabase.storage.from('cni').list(`${user.id}/`),
+        ]);
+        const diplomas = (diplomasRes.data || []).filter(f => f.name !== '.emptyFolderPlaceholder');
+        const cniDocs = (cniRes.data || []).filter(f => f.name !== '.emptyFolderPlaceholder');
+        setHasDocuments(diplomas.length > 0 || cniDocs.length > 0);
+
         setStats({
           totalApplications: applications?.length || 0,
           pendingApplications: pendingCount,
@@ -167,6 +177,42 @@ export default function RepetiteurDashboard() {
       title="Tableau de bord"
       description={`Bienvenue ${profile?.full_name || ''} ! Consultez les offres de cours et suivez vos candidatures.`}
     >
+      {/* Bandeau statut documents */}
+      {(() => {
+        const extProfile = profile as typeof profile & { documents_valides?: boolean };
+        if (extProfile?.documents_valides) {
+          return (
+            <div className="mb-5 flex items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+              <ShieldCheck className="h-5 w-5 shrink-0 text-green-600 mt-0.5" />
+              <div>
+                <p className="font-semibold text-green-700 text-sm">Documents validés ✓</p>
+                <p className="text-xs text-green-600">Votre dossier a été approuvé. Vous pouvez postuler aux offres.</p>
+              </div>
+            </div>
+          );
+        }
+        if (hasDocuments) {
+          return (
+            <div className="mb-5 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <AlertCircle className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+              <div>
+                <p className="font-semibold text-amber-700 text-sm">Documents en cours de traitement</p>
+                <p className="text-xs text-amber-600">Vos documents ont bien été reçus. L'administrateur les examinera sous peu.</p>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div className="mb-5 flex items-start gap-3 rounded-xl border border-border bg-muted/40 px-4 py-3">
+            <FileWarning className="h-5 w-5 shrink-0 text-muted-foreground mt-0.5" />
+            <div>
+              <p className="font-semibold text-sm">Complétez votre dossier</p>
+              <p className="text-xs text-muted-foreground">Téléchargez vos diplômes et votre CNI pour postuler aux offres.</p>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Quick action */}
       <div className="mb-6">
         <Button asChild size="lg" className="gap-2">

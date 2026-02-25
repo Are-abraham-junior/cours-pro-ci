@@ -12,8 +12,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search, FileText, Filter } from 'lucide-react';
+import { Loader2, Search, FileText, Filter, ShieldAlert } from 'lucide-react';
 import { MATIERES, NIVEAUX, OfferStatus } from '@/lib/constants';
 
 interface Offer {
@@ -32,6 +33,9 @@ interface Offer {
 export default function OffresDisponibles() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const extProfile = profile as typeof profile & { documents_valides?: boolean };
+  const documentsValides = !!extProfile?.documents_valides;
 
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,6 +114,19 @@ export default function OffresDisponibles() {
             Trouvez des opportunités de cours particuliers
           </p>
         </div>
+
+        {/* Bannière blocage si documents non validés */}
+        {!documentsValides && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+            <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+            <div>
+              <p className="font-semibold text-amber-700 text-sm">Candidatures désactivées</p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                Vos documents (diplômes et CNI) ne sont pas encore validés par l'administrateur. Vous pouvez consulter les offres mais vous ne pourrez pas postuler.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3">

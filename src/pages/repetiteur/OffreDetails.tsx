@@ -15,7 +15,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Loader2, MapPin, Calendar, Coins, Send, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, Calendar, Coins, Send, CheckCircle, ShieldAlert } from 'lucide-react';
 import { OfferStatus } from '@/lib/constants';
 import { ApplicationFormData } from '@/lib/validations';
 
@@ -36,8 +36,10 @@ interface Offer {
 export default function OffreDetailsRepetiteur() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
+  const extProfile = profile as typeof profile & { documents_valides?: boolean };
+  const documentsValides = !!extProfile?.documents_valides;
 
   const [offer, setOffer] = useState<Offer | null>(null);
   const [loading, setLoading] = useState(true);
@@ -199,6 +201,22 @@ export default function OffreDetailsRepetiteur() {
                 <span className="text-green-700 dark:text-green-400 font-medium">
                   Vous avez postulé à cette offre
                 </span>
+              </div>
+            ) : !documentsValides ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-amber-700 text-sm">Vous ne pouvez pas encore postuler</p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      Vos documents (diplômes et CNI) doivent être validés par l'administrateur avant de pouvoir postuler aux offres.
+                    </p>
+                  </div>
+                </div>
+                <Button size="lg" className="w-full mt-3" disabled>
+                  <Send className="h-4 w-4 mr-2" />
+                  Postuler à cette offre
+                </Button>
               </div>
             ) : (
               <Button
