@@ -81,7 +81,7 @@ export function ApplicationCard({
 
   const repetiteur = application.repetiteur;
   const hasEnrichedProfile = repetiteur && (
-    repetiteur.bio || 
+    repetiteur.bio ||
     (repetiteur.matieres && repetiteur.matieres.length > 0) ||
     (repetiteur.niveaux && repetiteur.niveaux.length > 0) ||
     repetiteur.localisation ||
@@ -109,9 +109,7 @@ export function ApplicationCard({
                     <Badge variant="outline" className="text-xs">Profil complet</Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {repetiteur.phone}
-                </p>
+
                 {repetiteur.experience_annees && repetiteur.experience_annees > 0 && (
                   <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                     <Briefcase className="h-3 w-3" />
