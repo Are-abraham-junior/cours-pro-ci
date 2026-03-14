@@ -31,6 +31,8 @@ import OffresDisponibles from "./pages/repetiteur/OffresDisponibles";
 import OffreDetailsRepetiteur from "./pages/repetiteur/OffreDetails";
 import MesCandidatures from "./pages/repetiteur/MesCandidatures";
 import MesContratsRepetiteur from "./pages/repetiteur/MesContrats";
+import ParentMessages from "./pages/parent/Messages";
+import RepetiteurMessages from "./pages/repetiteur/Messages";
 
 const queryClient = new QueryClient();
 
@@ -205,6 +207,22 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/mes-messages"
+              element={
+                <ProtectedRoute requiredRoles={['client']}>
+                  <ParentMessages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/mes-messages/:contractId"
+              element={
+                <ProtectedRoute requiredRoles={['client']}>
+                  <ParentMessages />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Routes Répétiteur */}
             <Route
@@ -252,6 +270,22 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRoles={['prestataire']}>
                   <MesContratsRepetiteur />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/repetiteur/messages"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <RepetiteurMessages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/repetiteur/messages/:contractId"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <RepetiteurMessages />
                 </ProtectedRoute>
               }
             />
