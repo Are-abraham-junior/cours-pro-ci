@@ -31,6 +31,10 @@ interface Offer {
   statut: OfferStatus;
   created_at: string;
   parent_id: string;
+  profiles?: {
+    full_name: string;
+    avatar_url: string | null;
+  };
 }
 
 export default function OffreDetailsRepetiteur() {
@@ -58,7 +62,7 @@ export default function OffreDetailsRepetiteur() {
       // Fetch offer
       const { data: offerData, error: offerError } = await supabase
         .from('offers')
-        .select('*')
+        .select('*, profiles(full_name, avatar_url)')
         .eq('id', id)
         .single();
 
@@ -160,12 +164,34 @@ export default function OffreDetailsRepetiteur() {
           Retour aux offres
         </Button>
 
-        {/* Offer details */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">
-              {offer.matiere} - {offer.niveau}
-            </CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+              <CardTitle className="text-2xl">
+                {offer.matiere} - {offer.niveau}
+              </CardTitle>
+            </div>
+            {offer.profiles && (
+              <div className="flex flex-col items-center gap-1 shrink-0 bg-muted/50 p-2 rounded-lg border">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+                  {offer.profiles.avatar_url ? (
+                    <img
+                      src={offer.profiles.avatar_url}
+                      alt={offer.profiles.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-primary font-bold text-lg">
+                      {offer.profiles.full_name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground text-center">
+                  Proposé par<br/>
+                  <strong className="text-foreground">{offer.profiles.full_name}</strong>
+                </span>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-foreground whitespace-pre-wrap">{offer.description}</p>

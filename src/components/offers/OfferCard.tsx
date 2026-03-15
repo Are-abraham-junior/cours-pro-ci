@@ -20,6 +20,10 @@ interface OfferCardProps {
     statut: OfferStatus;
     created_at: string;
     applications_count?: number;
+    profiles?: {
+      full_name: string;
+      avatar_url: string | null;
+    };
   };
   showStatus?: boolean;
   showApplicationsCount?: boolean;
@@ -60,11 +64,34 @@ export function OfferCard({
             </h3>
             <p className="text-sm text-muted-foreground">{offer.niveau}</p>
           </div>
-          {showStatus && (
-            <Badge className={cn('shrink-0', statusColors[offer.statut])}>
-              {OFFER_STATUS_LABELS[offer.statut]}
-            </Badge>
-          )}
+          <div className="flex flex-col items-end gap-2">
+            {showStatus && (
+              <Badge className={cn('shrink-0', statusColors[offer.statut])}>
+                {OFFER_STATUS_LABELS[offer.statut]}
+              </Badge>
+            )}
+            {offer.profiles && (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-muted-foreground text-right hidden sm:inline-block">
+                  Proposé par<br/>
+                  <strong className="text-foreground">{offer.profiles.full_name}</strong>
+                </span>
+                <div className="w-8 h-8 rounded-full overflow-hidden shrink-0 bg-primary/10 flex items-center justify-center border">
+                  {offer.profiles.avatar_url ? (
+                    <img
+                      src={offer.profiles.avatar_url}
+                      alt={offer.profiles.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-primary font-bold text-xs">
+                      {offer.profiles.full_name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </CardHeader>
 
