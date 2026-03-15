@@ -34,6 +34,8 @@ const repetiteurProfileSchema = z.object({
     .max(50, "L'expérience maximum est de 50 ans")
     .optional()
     .or(z.literal(0)),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
 });
 
 type RepetiteurProfileFormData = z.infer<typeof repetiteurProfileSchema>;
@@ -54,6 +56,8 @@ export function RepetiteurProfileForm() {
       localisation: '',
       tarif_horaire: 0,
       experience_annees: 0,
+      latitude: null,
+      longitude: null,
     },
   });
 
@@ -65,7 +69,7 @@ export function RepetiteurProfileForm() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('bio, matieres, niveaux, disponibilites, localisation, tarif_horaire, experience_annees')
+          .select('bio, matieres, niveaux, disponibilites, localisation, tarif_horaire, experience_annees, latitude, longitude')
           .eq('id', profile.id)
           .single();
 
@@ -80,6 +84,8 @@ export function RepetiteurProfileForm() {
             localisation: data.localisation || '',
             tarif_horaire: data.tarif_horaire || 0,
             experience_annees: data.experience_annees || 0,
+            latitude: data.latitude,
+            longitude: data.longitude,
           });
         }
       } catch (error) {
@@ -104,7 +110,9 @@ export function RepetiteurProfileForm() {
         data.matieres.length > 0 && 
         data.niveaux.length > 0 && 
         data.disponibilites.length > 0 &&
-        data.localisation
+        data.localisation &&
+        data.latitude &&
+        data.longitude
       );
 
       const { error } = await supabase
@@ -117,6 +125,8 @@ export function RepetiteurProfileForm() {
           localisation: data.localisation || null,
           tarif_horaire: data.tarif_horaire || null,
           experience_annees: data.experience_annees || 0,
+          latitude: data.latitude,
+          longitude: data.longitude,
           profil_complet: profilComplet,
         })
         .eq('id', profile.id);
@@ -379,6 +389,62 @@ export function RepetiteurProfileForm() {
                   </FormItem>
                 )}
               />
+
+              {/* Localisation GPS (Latitude / Longitude) */}
+              <div className="space-y-2 pt-2 border-t text-sm">
+                <FormLabel>Position GPS sur la carte</FormLabel>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      if ("geolocation" in navigator) {
+                        navigator.geolocation.getCurrentPosition(
+                          (position) => {
+                            form.setValue('latitude', position.coords.latitude, { shouldDirty: true });
+                            form.setValue('longitude', position.coords.longitude, { shouldDirty: true });
+                            toast({
+                              title: "Position capturée",
+                              description: "Vos coordonnées GPS ont été mises à jour.",
+                            });
+                          },
+                          (error) => {
+                            console.error(error);
+                            toast({
+                              title: "Erreur GPS",
+                              description: "Impossible d'obtenir votre position. Autorisez l'accès à la localisation dans votre navigateur.",
+                              variant: "destructive"
+                            });
+                          }
+                        );
+                      } else {
+                        toast({
+                          title: "Non supporté",
+                          description: "La géolocalisation n'est pas supportée par votre navigateur.",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Utiliser ma position actuelle
+                  </Button>
+                  
+                  {form.watch('latitude') && form.watch('longitude') ? (
+                    <span className="text-xs text-green-600 font-medium flex-shrink-0 bg-green-50 px-2 py-1 rounded-md border border-green-200">
+                      Coordonnées capturées ✓
+                    </span>
+                  ) : (
+                    <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 flex-shrink-0">
+                      Position requise
+                    </span>
+                  )}
+                </div>
+                <FormDescription>
+                  Indispensable pour que les parents proches de vous puissent vous trouver sur la carte.
+                </FormDescription>
+              </div>
             </CardContent>
           </Card>
 

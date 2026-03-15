@@ -17,6 +17,7 @@ import {
   Briefcase,
   FileCheck,
   MessageCircle,
+  Map,
 } from 'lucide-react';
 import { useState } from 'react';
 import { NotificationBell } from '@/components/chat/NotificationBell';
@@ -39,6 +40,7 @@ const navItems: NavItem[] = [
   // Parent items
   { label: 'Tableau de bord', href: '/parent/dashboard', icon: LayoutDashboard, roles: ['client'] },
   { label: 'Mes offres', href: '/mes-offres', icon: FileText, roles: ['client'] },
+  { label: 'Recherche Carte', href: '/parent/recherche-carte', icon: Map, roles: ['client'] },
   { label: 'Mes contrats', href: '/mes-contrats', icon: FileCheck, roles: ['client'] },
   { label: 'Messages', href: '/mes-messages', icon: MessageCircle, roles: ['client'] },
   // Répétiteur items

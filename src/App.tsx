@@ -23,6 +23,7 @@ import MesOffres from "./pages/parent/MesOffres";
 import NouvelleOffre from "./pages/parent/NouvelleOffre";
 import OffreDetailsParent from "./pages/parent/OffreDetails";
 import MesContratsParent from "./pages/parent/MesContrats";
+import RechercheCarte from "./pages/parent/RechercheCarte";
 
 // Répétiteur pages
 import RepetiteurDashboard from "./pages/repetiteur/Dashboard";
@@ -220,6 +221,14 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRoles={['client']}>
                   <ParentMessages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/parent/recherche-carte"
+              element={
+                <ProtectedRoute requiredRoles={['client']}>
+                  <RechercheCarte />
                 </ProtectedRoute>
               }
             />
