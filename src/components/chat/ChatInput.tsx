@@ -125,9 +125,9 @@ export function ChatInput({ onSend, sending, disabled }: ChatInputProps) {
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('chat_audios').getPublicUrl(filePath);
+      const { data: { publicUrl } } = supabase.storage.from('chat_audios').getPublicUrl(filePath);
       
-      onSend('', data.publicUrl);
+      onSend('', publicUrl);
     } catch (error) {
       console.error('Erreur upload audio:', error);
       alert('Erreur lors de l\'envoi du message vocal.');

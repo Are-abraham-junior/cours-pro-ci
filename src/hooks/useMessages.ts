@@ -90,7 +90,10 @@ export function useMessages(contractId: string | null) {
     channelRef.current = channel;
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channel);
+        channelRef.current = null;
+      }
     };
   }, [contractId, user, fetchMessages]);
 

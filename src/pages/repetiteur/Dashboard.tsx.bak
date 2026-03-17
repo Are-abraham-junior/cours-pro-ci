@@ -10,17 +10,6 @@ import { Briefcase, Send, Clock, CheckCircle, Loader2, ArrowRight, MapPin, Alert
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { APPLICATION_STATUS_LABELS } from '@/lib/constants';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { useToast } from '@/hooks/use-toast';
-import { Coins } from 'lucide-react';
 
 interface RepetiteurStats {
   totalApplications: number;
@@ -52,7 +41,6 @@ interface MyApplication {
 
 export default function RepetiteurDashboard() {
   const { user, profile } = useAuth();
-  const { toast } = useToast();
   const [stats, setStats] = useState<RepetiteurStats>({
     totalApplications: 0,
     pendingApplications: 0,
@@ -150,30 +138,10 @@ export default function RepetiteurDashboard() {
     fetchData();
   }, [user]);
 
-  const handleRecharge = async (packId: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: { packId }
-      });
-
-      if (error) throw error;
-      if (data?.checkout_url) {
-        window.location.href = data.checkout_url;
-      }
-    } catch (error) {
-      console.error('Error initiating payment:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible d'initier le paiement. Veuillez réessayer.",
-        variant: "destructive"
-      });
-    }
-  };
-
   const statCards = [
     { label: 'Offres disponibles', value: stats.availableOffers, icon: Briefcase, color: 'text-primary' },
-    { label: 'Tokens disponibles', value: (profile as any)?.tokens || 0, icon: Coins, color: 'text-yellow-500' },
     { label: 'Mes candidatures', value: stats.totalApplications, icon: Send, color: 'text-secondary' },
+    { label: 'En attente', value: stats.pendingApplications, icon: Clock, color: 'text-amber-500' },
     { label: 'Acceptées', value: stats.acceptedApplications, icon: CheckCircle, color: 'text-emerald-500' },
   ];
 
@@ -245,89 +213,14 @@ export default function RepetiteurDashboard() {
         );
       })()}
 
-      {/* Quick action & Tokens */}
-      <div className="mb-6 flex flex-wrap gap-4 items-center">
+      {/* Quick action */}
+      <div className="mb-6">
         <Button asChild size="lg" className="gap-2">
           <Link to="/offres">
             <Briefcase className="h-5 w-5" />
             Voir les offres disponibles
           </Link>
         </Button>
-
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="lg" className="gap-2 border-yellow-500 text-yellow-700 hover:bg-yellow-50">
-              <Coins className="h-5 w-5 text-yellow-500" />
-              Recharger mes tokens
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Recharger vos tokens</DialogTitle>
-              <DialogDescription>
-                Choisissez un pack pour continuer à postuler aux offres.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <Button 
-                variant="outline" 
-                className="flex justify-between h-16 items-center px-6 hover:border-primary"
-                onClick={() => handleRecharge('pack-1')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-yellow-100 p-2 rounded-full">
-                    <Coins className="h-5 w-5 text-yellow-600" />
-                  </div>
-                  <span className="font-semibold">1 Token</span>
-                </div>
-                <span className="text-lg font-bold">200 FCFA</span>
-              </Button>
-
-              <Button 
-                variant="outline" 
-                className="flex justify-between h-16 items-center px-6 border-primary bg-primary/5 hover:bg-primary/10"
-                onClick={() => handleRecharge('pack-3')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-yellow-100 p-2 rounded-full">
-                    <Coins className="h-5 w-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <span className="font-semibold block">3 Tokens</span>
-                    <span className="text-xs text-muted-foreground line-through">600 FCFA</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-bold block">500 FCFA</span>
-                  <Badge className="bg-emerald-500 text-[10px] h-4">Promo</Badge>
-                </div>
-              </Button>
-
-              <Button 
-                variant="outline" 
-                className="flex justify-between h-16 items-center px-6 hover:border-primary"
-                onClick={() => handleRecharge('pack-10')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-yellow-100 p-2 rounded-full">
-                    <Coins className="h-5 w-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <span className="font-semibold block">10 Tokens</span>
-                    <span className="text-xs text-muted-foreground line-through">2000 FCFA</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-bold block">1000 FCFA</span>
-                  <Badge className="bg-emerald-500 text-[10px] h-4">-50%</Badge>
-                </div>
-              </Button>
-            </div>
-            <DialogFooter className="text-xs text-muted-foreground text-center sm:text-center">
-              Paiement sécurisé via Genius Pay
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
 
       {/* Stats cards */}

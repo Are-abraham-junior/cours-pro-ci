@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -9,7 +9,7 @@ export function useUnreadCount() {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     if (!user) return;
 
     // Récupère les contrats actifs de l'utilisateur
@@ -34,37 +34,47 @@ export function useUnreadCount() {
       .eq('is_read', false);
 
     setUnreadCount(count || 0);
-  };
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
     fetchUnreadCount();
 
-    const channel = supabase
-      .channel('unread_count_global')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
-        (payload) => {
-          const msg = payload.new as { sender_id: string; is_read: boolean };
-          if (msg.sender_id !== user.id && !msg.is_read) {
-            setUnreadCount((prev) => prev + 1);
+    let channelRef: ReturnType<typeof supabase.channel> | null = null;
+
+    const setupChannel = async () => {
+      channelRef = supabase
+        .channel('unread_count_global')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'messages' },
+          (payload) => {
+            const msg = payload.new as { sender_id: string; is_read: boolean };
+            if (msg.sender_id !== user.id && !msg.is_read) {
+              setUnreadCount((prev) => prev + 1);
+            }
           }
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'messages' },
-        () => {
-          fetchUnreadCount();
-        }
-      )
-      .subscribe();
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'messages' },
+          () => {
+            fetchUnreadCount();
+          }
+        )
+        .subscribe();
+
+      return channelRef;
+    };
+
+    setupChannel();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef) {
+        supabase.removeChannel(channelRef);
+      }
     };
-  }, [user]);
+  }, [user, fetchUnreadCount]);
 
   return { unreadCount, refetch: fetchUnreadCount };
 }

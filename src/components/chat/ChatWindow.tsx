@@ -31,7 +31,11 @@ export function ChatWindow({ contractId, otherUser, contractInfo }: ChatWindowPr
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Use setTimeout to ensure DOM is updated before scrolling
+    const timeoutId = setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+    return () => clearTimeout(timeoutId);
   }, [messages]);
 
   // Group messages by date for separators
