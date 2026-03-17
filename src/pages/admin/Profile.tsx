@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { RoleBadge } from '@/components/users/RoleBadge';
+import { AvatarUpload } from '@/components/profile/AvatarUpload';
 import { Loader2, User, Phone, Calendar, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -95,13 +96,12 @@ export default function Profile() {
               Ces informations ne peuvent pas être modifiées
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-primary font-bold text-3xl">
-                  {profile.full_name.charAt(0).toUpperCase()}
-                </span>
-              </div>
+           <CardContent className="space-y-4">
+            <div className="flex items-center gap-6">
+              <AvatarUpload
+                currentAvatarUrl={profile.avatar_url}
+                size="md"
+              />
               <div>
                 <h3 className="font-semibold text-xl">{profile.full_name}</h3>
                 <div className="flex flex-wrap gap-1 mt-1">

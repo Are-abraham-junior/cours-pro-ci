@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,8 @@ import {
   GraduationCap,
   Phone,
   Clock,
-  User
+  User,
+  MessageCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -58,6 +59,7 @@ interface Contract {
 export default function MesContratsRepetiteur() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -182,6 +184,17 @@ export default function MesContratsRepetiteur() {
           <p className="text-sm font-medium text-primary">
             Tarif convenu: {contract.tarif_convenu.toLocaleString('fr-FR')} FCFA
           </p>
+        )}
+      {contract.statut === 'actif' && (
+        <div className="pt-3 border-t">
+          <Button
+            className="w-full gap-2 bg-[#f97316] hover:bg-[#ea6c0a] text-white"
+            onClick={() => navigate(`/repetiteur/messages/${contract.id}`)}
+          >
+            <MessageCircle className="h-4 w-4" />
+            Discuter avec le parent
+          </Button>
+        </div>
         )}
       </CardContent>
     </Card>

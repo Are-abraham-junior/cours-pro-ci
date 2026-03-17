@@ -16,8 +16,12 @@ import {
   Send,
   Briefcase,
   FileCheck,
+  MessageCircle,
+  Map,
 } from 'lucide-react';
 import { useState } from 'react';
+import { NotificationBell } from '@/components/chat/NotificationBell';
+import { useUnreadCount } from '@/hooks/useUnreadCount';
 
 interface NavItem {
   label: string;
@@ -36,18 +40,22 @@ const navItems: NavItem[] = [
   // Parent items
   { label: 'Tableau de bord', href: '/parent/dashboard', icon: LayoutDashboard, roles: ['client'] },
   { label: 'Mes offres', href: '/mes-offres', icon: FileText, roles: ['client'] },
+  { label: 'Recherche Carte', href: '/parent/recherche-carte', icon: Map, roles: ['client'] },
   { label: 'Mes contrats', href: '/mes-contrats', icon: FileCheck, roles: ['client'] },
+  { label: 'Messages', href: '/mes-messages', icon: MessageCircle, roles: ['client'] },
   // Répétiteur items
   { label: 'Tableau de bord', href: '/repetiteur/dashboard', icon: LayoutDashboard, roles: ['prestataire'] },
   { label: 'Offres disponibles', href: '/offres', icon: Briefcase, roles: ['prestataire'] },
   { label: 'Mes candidatures', href: '/mes-candidatures', icon: Send, roles: ['prestataire'] },
   { label: 'Mes contrats', href: '/repetiteur/contrats', icon: FileCheck, roles: ['prestataire'] },
+  { label: 'Messages', href: '/repetiteur/messages', icon: MessageCircle, roles: ['prestataire'] },
 ];
 
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, roles, signOut } = useAuth();
+  const { unreadCount } = useUnreadCount();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const filteredNavItems = navItems.filter(item => {
@@ -95,7 +103,12 @@ export function Sidebar() {
                   )}
                 >
                   <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {item.label === 'Messages' && unreadCount > 0 && (
+                    <span className="h-5 min-w-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             );
@@ -105,11 +118,18 @@ export function Sidebar() {
 
       {/* Footer - User info */}
       <div className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center justify-between px-1 mb-2">
+          <span className="text-xs text-sidebar-foreground/50 font-medium">Notifications</span>
+          <NotificationBell
+            href={roles.includes('prestataire') ? '/repetiteur/messages' : '/mes-messages'}
+          />
+        </div>
         <Link
           to={roles.includes('prestataire') ? '/repetiteur/profil' : '/profile'}
           onClick={() => setMobileOpen(false)}
           className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-sidebar-accent transition-colors"
         >
+
           <UserCircle className="w-8 h-8 text-sidebar-foreground" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-sidebar-foreground truncate">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +22,8 @@ import {
   MapPin, 
   GraduationCap,
   Phone,
-  Clock
+  Clock,
+  MessageCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -64,6 +65,7 @@ interface Contract {
 export default function MesContrats() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
@@ -248,7 +250,15 @@ export default function MesContrats() {
                 )}
 
                 {contract.statut === 'actif' && (
-                  <div className="pt-2 border-t">
+                  <div className="pt-2 border-t space-y-2">
+                    <Button
+                      variant="default"
+                      className="w-full gap-2 bg-[#f97316] hover:bg-[#ea6c0a] text-white"
+                      onClick={() => navigate(`/mes-messages/${contract.id}`)}
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      Discuter avec le répétiteur
+                    </Button>
                     <Select
                       value={contract.statut}
                       onValueChange={(value) => handleStatusChange(contract.id, value as ContractStatus)}

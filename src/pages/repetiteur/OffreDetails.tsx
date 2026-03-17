@@ -31,6 +31,10 @@ interface Offer {
   statut: OfferStatus;
   created_at: string;
   parent_id: string;
+  profiles?: {
+    full_name: string;
+    avatar_url: string | null;
+  };
 }
 
 export default function OffreDetailsRepetiteur() {
@@ -38,8 +42,9 @@ export default function OffreDetailsRepetiteur() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { toast } = useToast();
-  const extProfile = profile as typeof profile & { documents_valides?: boolean };
+  const extProfile = profile as typeof profile & { documents_valides?: boolean; tokens?: number };
   const documentsValides = !!extProfile?.documents_valides;
+  const hasTokens = (extProfile?.tokens ?? 0) > 0;
 
   const [offer, setOffer] = useState<Offer | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +63,7 @@ export default function OffreDetailsRepetiteur() {
       // Fetch offer
       const { data: offerData, error: offerError } = await supabase
         .from('offers')
-        .select('*')
+        .select('*, profiles(full_name, avatar_url)')
         .eq('id', id)
         .single();
 
@@ -160,12 +165,34 @@ export default function OffreDetailsRepetiteur() {
           Retour aux offres
         </Button>
 
-        {/* Offer details */}
         <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">
-              {offer.matiere} - {offer.niveau}
-            </CardTitle>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div>
+              <CardTitle className="text-2xl">
+                {offer.matiere} - {offer.niveau}
+              </CardTitle>
+            </div>
+            {offer.profiles && (
+              <div className="flex flex-col items-center gap-1 shrink-0 bg-muted/50 p-2 rounded-lg border">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+                  {offer.profiles.avatar_url ? (
+                    <img
+                      src={offer.profiles.avatar_url}
+                      alt={offer.profiles.full_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-primary font-bold text-lg">
+                      {offer.profiles.full_name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground text-center">
+                  Proposé par<br/>
+                  <strong className="text-foreground">{offer.profiles.full_name}</strong>
+                </span>
+              </div>
+            )}
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-foreground whitespace-pre-wrap">{offer.description}</p>
@@ -207,15 +234,35 @@ export default function OffreDetailsRepetiteur() {
                 <div className="flex items-start gap-3">
                   <ShieldAlert className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
                   <div>
-                    <p className="font-semibold text-amber-700 text-sm">Vous ne pouvez pas encore postuler</p>
+                    <p className="font-semibold text-amber-700 text-sm">Dossier incomplet</p>
                     <p className="text-xs text-amber-600 mt-1">
-                      Vos documents (diplômes et CNI) doivent être validés par l'administrateur avant de pouvoir postuler aux offres.
+                      Vos documents doivent être validés par l'administrateur pour postuler.
                     </p>
                   </div>
                 </div>
                 <Button size="lg" className="w-full mt-3" disabled>
                   <Send className="h-4 w-4 mr-2" />
                   Postuler à cette offre
+                </Button>
+              </div>
+            ) : !hasTokens ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="flex items-start gap-3">
+                  <Coins className="h-5 w-5 shrink-0 text-amber-600 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-amber-700 text-sm">Plus de tokens</p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      Vous n'avez plus de tokens pour postuler. Veuillez recharger votre compte sur votre tableau de bord.
+                    </p>
+                  </div>
+                </div>
+                <Button 
+                  size="lg" 
+                  className="w-full mt-3" 
+                  onClick={() => navigate('/repetiteur/dashboard')}
+                >
+                  <Coins className="h-4 w-4 mr-2" />
+                  Recharger mes tokens
                 </Button>
               </div>
             ) : (

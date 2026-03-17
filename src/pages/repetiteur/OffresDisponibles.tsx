@@ -28,6 +28,10 @@ interface Offer {
   budget_max: number;
   statut: OfferStatus;
   created_at: string;
+  profiles?: {
+    full_name: string;
+    avatar_url: string | null;
+  };
 }
 
 export default function OffresDisponibles() {
@@ -51,7 +55,7 @@ export default function OffresDisponibles() {
     try {
       const { data, error } = await supabase
         .from('offers')
-        .select('*')
+        .select('*, profiles(full_name, avatar_url)')
         .eq('statut', 'ouverte')
         .order('created_at', { ascending: false });
 
