@@ -98,6 +98,6 @@ Distribué sous la licence MIT.
 
 ## 📞 Contact
 
-Votre Nom - [votre-email@exemple.com]
+Email - areabraham225@gmail.com
 
-Lien du Projet: [https://github.com/votre-username/repetiteurs-platform]
+Lien du Projet: https://github.com/Are-abraham-junior/cours-pro-ci
