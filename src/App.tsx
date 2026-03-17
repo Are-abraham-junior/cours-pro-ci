@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Loader2 } from "lucide-react";
 
 // Pages
+import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/Dashboard";
 import Users from "./pages/admin/Users";
@@ -102,8 +103,8 @@ const App = () => (
             {/* Route publique */}
             <Route path="/auth" element={<AuthRedirect />} />
 
-            {/* Redirection de la page d'accueil */}
-            <Route path="/" element={<HomeRedirect />} />
+            {/* Page d'accueil publique */}
+            <Route path="/" element={<Index />} />
 
             {/* Routes Admin - Dashboard */}
             <Route
