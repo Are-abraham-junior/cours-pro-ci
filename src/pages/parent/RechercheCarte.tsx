@@ -250,7 +250,7 @@ export default function RechercheCarte() {
           background: #f1f5f9;
           display: flex;
           align-items: center;
-          justify-center: center;
+          justify-content: center;
           border: 1px solid rgba(0,0,0,0.05);
         }
         .checkpoint-avatar img {

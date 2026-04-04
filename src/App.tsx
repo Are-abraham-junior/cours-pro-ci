@@ -35,6 +35,8 @@ import MesCandidatures from "./pages/repetiteur/MesCandidatures";
 import MesContratsRepetiteur from "./pages/repetiteur/MesContrats";
 import ParentMessages from "./pages/parent/Messages";
 import RepetiteurMessages from "./pages/repetiteur/Messages";
+import Tokens from "./pages/repetiteur/Tokens";
+import PaymentCallback from "./pages/repetiteur/PaymentCallback";
 
 const queryClient = new QueryClient();
 
@@ -296,6 +298,22 @@ const App = () => (
               element={
                 <ProtectedRoute requiredRoles={['prestataire']}>
                   <RepetiteurMessages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/repetiteur/tokens"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <Tokens />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/repetiteur/payment-callback"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <PaymentCallback />
                 </ProtectedRoute>
               }
             />

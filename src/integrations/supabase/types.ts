@@ -214,6 +214,8 @@ export type Database = {
           phone: string
           profil_complet: boolean | null
           tarif_horaire: number | null
+          latitude: number | null
+          longitude: number | null
           updated_at: string
         }
         Insert: {
@@ -231,6 +233,8 @@ export type Database = {
           phone: string
           profil_complet?: boolean | null
           tarif_horaire?: number | null
+          latitude?: number | null
+          longitude?: number | null
           updated_at?: string
         }
         Update: {
@@ -248,6 +252,8 @@ export type Database = {
           phone?: string
           profil_complet?: boolean | null
           tarif_horaire?: number | null
+          latitude?: number | null
+          longitude?: number | null
           updated_at?: string
         }
         Relationships: []
