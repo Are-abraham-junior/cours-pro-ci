@@ -259,7 +259,7 @@ export default function OffreDetailsRepetiteur() {
                 <Button 
                   size="lg" 
                   className="w-full mt-3" 
-                  onClick={() => navigate('/repetiteur/dashboard')}
+                  onClick={() => navigate('/repetiteur/tokens')}
                 >
                   <Coins className="h-4 w-4 mr-2" />
                   Recharger mes tokens

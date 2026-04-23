@@ -101,7 +101,7 @@ export default function RechercheCarte() {
   }
 
   return (
-    <DashboardLayout 
+    <DashboardLayout
       title="Recherche de Répétiteurs"
       description="Trouvez les professeurs particuliers les plus proches de chez vous"
     >
@@ -116,9 +116,9 @@ export default function RechercheCarte() {
           </p>
         </div>
 
-        <MapContainer 
-          center={userLocation || defaultCenter} 
-          zoom={12} 
+        <MapContainer
+          center={userLocation || defaultCenter}
+          zoom={12}
           style={{ height: '100%', width: '100%', zIndex: 0 }}
         >
           <TileLayer
@@ -142,8 +142,8 @@ export default function RechercheCarte() {
 
           {/* Marqueurs des répétiteurs */}
           {repetiteurs.map((rep) => (
-            <Marker 
-              key={rep.id} 
+            <Marker
+              key={rep.id}
               position={[rep.latitude, rep.longitude]}
               icon={L.divIcon({
                 className: 'custom-checkpoint-icon',
@@ -156,10 +156,10 @@ export default function RechercheCarte() {
                       </svg>
                     </div>
                     <div class="checkpoint-avatar">
-                      ${rep.avatar_url 
-                        ? `<img src="${rep.avatar_url}" alt="${rep.full_name}" />`
-                        : `<div class="avatar-placeholder">${rep.full_name.charAt(0)}</div>`
-                      }
+                      ${rep.avatar_url
+                    ? `<img src="${rep.avatar_url}" alt="${rep.full_name}" />`
+                    : `<div class="avatar-placeholder">${rep.full_name.charAt(0)}</div>`
+                  }
                     </div>
                   </div>
                 `,
@@ -204,8 +204,8 @@ export default function RechercheCarte() {
                     <span className="text-sm font-semibold">{formatBudget(rep.tarif_horaire)}</span>
                   </div>
 
-                  <Button 
-                    className="w-full text-xs h-8" 
+                  <Button
+                    className="w-full text-xs h-8"
                     onClick={() => navigate(`/repetiteurs/${rep.id}`)}
                   >
                     Voir le profil complet
@@ -217,7 +217,7 @@ export default function RechercheCarte() {
           ))}
         </MapContainer>
       </Card>
-      
+
       {/* Styles globaux pour fix le rendu Tailwind dans Leaflet Popup et Checkpoints */}
       <style>{`
         .custom-checkpoint-icon {

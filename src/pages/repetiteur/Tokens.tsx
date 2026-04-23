@@ -9,9 +9,10 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
 // Exemple de forfaits de jetons : 1 jeton = 1000 FCFA
 const TOKEN_PACKS = [
-  { id: "pack-1", name: "Pack Démarrage", tokens: 5, price: 5000, popular: false },
-  { id: "pack-2", name: "Pack Standard", tokens: 10, price: 10000, popular: true },
-  { id: "pack-3", name: "Pack Premium", tokens: 20, price: 20000, popular: false },
+  { id: "pack-1", name: "Pack Découverte", tokens: 1, price: 200, popular: false },
+  { id: "pack-2", name: "Pack Essentiel", tokens: 3, price: 500, popular: false },
+  { id: "pack-3", name: "Pack Standard", tokens: 7, price: 1000, popular: true },
+  { id: "pack-4", name: "Pack Premium", tokens: 10, price: 1500, popular: false },
 ];
 
 export default function Tokens() {

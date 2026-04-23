@@ -76,10 +76,10 @@ export default function ParentMessages() {
             contractInfo: `${contract.matiere} - ${contract.niveau}`,
             lastMessage: lastMsgData
               ? {
-                  content: lastMsgData.content,
-                  created_at: lastMsgData.created_at,
-                  is_mine: lastMsgData.sender_id === user.id,
-                }
+                content: lastMsgData.content,
+                created_at: lastMsgData.created_at,
+                is_mine: lastMsgData.sender_id === user.id,
+              }
               : undefined,
             unreadCount: unreadResult.count || 0,
           };

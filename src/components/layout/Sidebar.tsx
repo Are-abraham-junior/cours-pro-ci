@@ -50,7 +50,7 @@ const navItems: NavItem[] = [
   { label: 'Mes candidatures', href: '/mes-candidatures', icon: Send, roles: ['prestataire'] },
   { label: 'Mes contrats', href: '/repetiteur/contrats', icon: FileCheck, roles: ['prestataire'] },
   { label: 'Messages', href: '/repetiteur/messages', icon: MessageCircle, roles: ['prestataire'] },
-  { label: 'Jetons', href: '/repetiteur/tokens', icon: Zap, roles: ['prestataire'] },
+  { label: 'Tokens', href: '/repetiteur/tokens', icon: Zap, roles: ['prestataire'] },
 ];
 
 export function Sidebar() {

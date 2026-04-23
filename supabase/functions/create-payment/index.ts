@@ -46,8 +46,15 @@ serve(async (req) => {
       });
     }
 
-    // Server-side validation (1 token = 1000 FCFA for example)
-    if (amount !== tokens_count * 1000) {
+    // Server-side validation
+    const validPrices: Record<number, number> = {
+      1: 200,
+      3: 500,
+      7: 1000,
+      10: 1500
+    };
+
+    if (validPrices[tokens_count] !== amount) {
       return new Response(JSON.stringify({ error: 'Montant invalide' }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

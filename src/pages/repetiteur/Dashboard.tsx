@@ -254,80 +254,12 @@ export default function RepetiteurDashboard() {
           </Link>
         </Button>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="lg" className="gap-2 border-yellow-500 text-yellow-700 hover:bg-yellow-50">
-              <Coins className="h-5 w-5 text-yellow-500" />
-              Recharger mes tokens
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Recharger vos tokens</DialogTitle>
-              <DialogDescription>
-                Choisissez un pack pour continuer à postuler aux offres.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <Button 
-                variant="outline" 
-                className="flex justify-between h-16 items-center px-6 hover:border-primary"
-                onClick={() => handleRecharge('pack-1')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-yellow-100 p-2 rounded-full">
-                    <Coins className="h-5 w-5 text-yellow-600" />
-                  </div>
-                  <span className="font-semibold">1 Token</span>
-                </div>
-                <span className="text-lg font-bold">200 FCFA</span>
-              </Button>
-
-              <Button 
-                variant="outline" 
-                className="flex justify-between h-16 items-center px-6 border-primary bg-primary/5 hover:bg-primary/10"
-                onClick={() => handleRecharge('pack-3')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-yellow-100 p-2 rounded-full">
-                    <Coins className="h-5 w-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <span className="font-semibold block">3 Tokens</span>
-                    <span className="text-xs text-muted-foreground line-through">600 FCFA</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-bold block">500 FCFA</span>
-                  <Badge className="bg-emerald-500 text-[10px] h-4">Promo</Badge>
-                </div>
-              </Button>
-
-              <Button 
-                variant="outline" 
-                className="flex justify-between h-16 items-center px-6 hover:border-primary"
-                onClick={() => handleRecharge('pack-10')}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-yellow-100 p-2 rounded-full">
-                    <Coins className="h-5 w-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <span className="font-semibold block">10 Tokens</span>
-                    <span className="text-xs text-muted-foreground line-through">2000 FCFA</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="text-lg font-bold block">1000 FCFA</span>
-                  <Badge className="bg-emerald-500 text-[10px] h-4">-50%</Badge>
-                </div>
-              </Button>
-            </div>
-            <DialogFooter className="text-xs text-muted-foreground text-center sm:text-center">
-              Paiement sécurisé via Genius Pay
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button asChild variant="outline" size="lg" className="gap-2 border-yellow-500 text-yellow-700 hover:bg-yellow-50">
+          <Link to="/repetiteur/tokens">
+            <Coins className="h-5 w-5 text-yellow-500" />
+            Recharger mes tokens
+          </Link>
+        </Button>
       </div>
 
       {/* Stats cards */}

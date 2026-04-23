@@ -7,7 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { APPLICATION_STATUS_LABELS, ApplicationStatus } from '@/lib/constants';
 import { cn } from '@/lib/utils';
-import { Check, X, Clock, ChevronDown, MapPin, Briefcase, GraduationCap, Banknote } from 'lucide-react';
+import { Check, X, Clock, ChevronDown, MapPin, Briefcase, GraduationCap, Banknote, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 
 interface RepetiteurProfile {
@@ -41,6 +41,7 @@ interface ApplicationCardProps {
   onAccept?: (applicationId: string) => void;
   onReject?: (applicationId: string) => void;
   onViewOffer?: (offerId: string) => void;
+  onChat?: (repetiteurId: string) => void;
   isLoading?: boolean;
 }
 
@@ -62,6 +63,7 @@ export function ApplicationCard({
   onAccept,
   onReject,
   onViewOffer,
+  onChat,
   isLoading = false,
 }: ApplicationCardProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -222,7 +224,7 @@ export function ApplicationCard({
         </p>
       </CardContent>
 
-      {(variant === 'parent' && application.statut === 'en_attente' && onAccept && onReject) && (
+      {variant === 'parent' && application.statut === 'en_attente' && onAccept && onReject && (
         <CardFooter className="gap-2">
           <Button
             variant="outline"
@@ -242,6 +244,19 @@ export function ApplicationCard({
           >
             <Check className="h-4 w-4 mr-1" />
             Accepter
+          </Button>
+        </CardFooter>
+      )}
+
+      {variant === 'parent' && application.statut === 'acceptee' && onChat && application.repetiteur && (
+        <CardFooter>
+          <Button
+            size="sm"
+            className="w-full gap-2 bg-primary hover:bg-primary/90"
+            onClick={() => onChat(application.repetiteur!.id)}
+          >
+            <MessageCircle className="h-4 w-4" />
+            Discuter
           </Button>
         </CardFooter>
       )}

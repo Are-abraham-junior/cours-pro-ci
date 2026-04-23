@@ -15,7 +15,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Loader2, MapPin, Calendar, Coins, Users } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, Calendar, Coins, Users, MessageCircle } from 'lucide-react';
 import { OFFER_STATUS_LABELS, OfferStatus, ApplicationStatus } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
@@ -311,6 +311,7 @@ export default function OffreDetails() {
                   variant="parent"
                   onAccept={(id) => handleApplicationAction(id, 'acceptee')}
                   onReject={(id) => handleApplicationAction(id, 'refusee')}
+                  onChat={() => navigate('/mes-messages')}
                   isLoading={updating}
                 />
               ))}
