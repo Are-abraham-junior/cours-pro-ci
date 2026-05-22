@@ -5,7 +5,7 @@ import { fr } from 'date-fns/locale';
 import { MessageCircle } from 'lucide-react';
 
 export interface Conversation {
-  contractId: string;
+  chatId: string;
   otherUser: {
     id: string;
     full_name: string;
@@ -22,14 +22,14 @@ export interface Conversation {
 
 interface ConversationListProps {
   conversations: Conversation[];
-  selectedContractId: string | null;
-  onSelect: (contractId: string) => void;
+  selectedChatId: string | null;
+  onSelect: (chatId: string) => void;
   loading?: boolean;
 }
 
 export function ConversationList({
   conversations,
-  selectedContractId,
+  selectedChatId,
   onSelect,
   loading,
 }: ConversationListProps) {
@@ -59,7 +59,7 @@ export function ConversationList({
         </div>
         <p className="font-medium text-sm">Aucune conversation</p>
         <p className="text-xs text-muted-foreground">
-          Les conversations apparaissent ici lorsqu'un contrat est actif
+          Vos conversations avec les répétiteurs apparaîtront ici
         </p>
       </div>
     );
@@ -68,11 +68,11 @@ export function ConversationList({
   return (
     <div className="flex-1 overflow-y-auto">
       {conversations.map((conv) => {
-        const isSelected = conv.contractId === selectedContractId;
+        const isSelected = conv.chatId === selectedChatId;
         return (
           <button
-            key={conv.contractId}
-            onClick={() => onSelect(conv.contractId)}
+            key={conv.chatId}
+            onClick={() => onSelect(conv.chatId)}
             className={cn(
               'w-full flex items-center gap-3 px-4 py-3 border-b border-border/50 transition-colors text-left',
               isSelected

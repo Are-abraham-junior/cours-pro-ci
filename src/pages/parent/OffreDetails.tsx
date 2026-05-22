@@ -187,6 +187,18 @@ export default function OffreDetails() {
         )
       );
 
+      if (action === 'acceptee' && offer) {
+        // Mettre à jour l'offre à 'fermee'
+        const { error: offerError } = await supabase
+          .from('offers')
+          .update({ statut: 'fermee' })
+          .eq('id', offer.id);
+        
+        if (!offerError) {
+          setOffer({ ...offer, statut: 'fermee' });
+        }
+      }
+
       toast({
         title: action === 'acceptee' ? 'Candidature acceptée' : 'Candidature refusée',
         description:

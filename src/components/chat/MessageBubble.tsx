@@ -9,9 +9,20 @@ interface MessageBubbleProps {
   isMine: boolean;
   isRead: boolean;
   audioUrl?: string;
+  isSystem?: boolean;
 }
 
-export function MessageBubble({ content, createdAt, isMine, isRead, audioUrl }: MessageBubbleProps) {
+export function MessageBubble({ content, createdAt, isMine, isRead, audioUrl, isSystem }: MessageBubbleProps) {
+  if (isSystem) {
+    return (
+      <div className="flex justify-center my-4 px-10">
+        <div className="bg-primary/5 dark:bg-primary/10 text-muted-foreground text-xs px-4 py-2 rounded-xl border border-primary/20 text-center italic max-w-sm">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn('flex', isMine ? 'justify-end' : 'justify-start')}>
       <div

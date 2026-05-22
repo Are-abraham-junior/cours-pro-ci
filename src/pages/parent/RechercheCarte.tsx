@@ -1,13 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Map as MapIcon, User, Star, ArrowRight } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  MessageSquare, 
+  Map as MapIcon, 
+  Star, 
+  User, 
+  Loader2 
+} from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 // Fix pour les icônes de marqueurs Leaflet avec Vite (les chemins relatifs sont parfois mal résolus)
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -33,9 +52,14 @@ interface RepetiteurMarker {
 
 export default function RechercheCarte() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [repetiteurs, setRepetiteurs] = useState<RepetiteurMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [selectedRep, setSelectedRep] = useState<RepetiteurMarker | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreatingConv, setIsCreatingConv] = useState(false);
 
   // Centre par défaut : Abidjan
   const defaultCenter: [number, number] = [5.3364, -4.0267];
@@ -88,6 +112,62 @@ export default function RechercheCarte() {
   const formatBudget = (amount: number | null) => {
     if (!amount) return 'Prix à débattre';
     return `${new Intl.NumberFormat('fr-FR').format(amount)} FCFA/h`;
+  };
+
+  const handleStartDiscussion = async () => {
+    if (!user || !selectedRep) return;
+    
+    setIsCreatingConv(true);
+    try {
+      // 1. Créer ou récupérer la conversation directe
+      // Note: On utilise select + insert au lieu de upsert pour mieux gérer l'id retourné
+      const { data: existingConv, error: fetchError } = await supabase
+        .from('direct_conversations' as any)
+        .select('id')
+        .eq('parent_id', user.id)
+        .eq('repetiteur_id', selectedRep.id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      let conversationId = existingConv?.id;
+
+      if (!conversationId) {
+        const { data: newConv, error: createError } = await supabase
+          .from('direct_conversations' as any)
+          .insert({
+            parent_id: user.id,
+            repetiteur_id: selectedRep.id
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        conversationId = newConv.id;
+
+        // 2. Envoyer le message système initial
+        await supabase.from('messages' as any).insert({
+          conversation_id: conversationId,
+          sender_id: user.id, // Le parent initie, mais c'est un message système
+          content: "Un parent souhaite vous contacter pour des cours particuliers. Votre premier message de réponse déduira 1 token de votre solde.",
+          is_system: true
+        });
+      }
+
+      // 3. Rediriger vers la messagerie
+      navigate(`/mes-messages/direct/${conversationId}`);
+      
+    } catch (error) {
+      console.error('Erreur lors de la création de la discussion:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de démarrer la discussion. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingConv(false);
+      setIsDialogOpen(false);
+    }
   };
 
   if (loading) {
@@ -205,17 +285,51 @@ export default function RechercheCarte() {
                   </div>
 
                   <Button
-                    className="w-full text-xs h-8"
-                    onClick={() => navigate(`/repetiteurs/${rep.id}`)}
+                    className="w-full text-xs h-8 gap-2"
+                    onClick={() => {
+                      setSelectedRep(rep);
+                      setIsDialogOpen(true);
+                    }}
                   >
-                    Voir le profil complet
-                    <ArrowRight className="h-3 w-3 ml-1.5" />
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Discuter
                   </Button>
                 </div>
               </Popup>
             </Marker>
           ))}
         </MapContainer>
+
+        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Démarrer une discussion ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vous allez être mis en relation avec {selectedRep?.full_name}. 
+                Souhaitez-vous continuer ?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isCreatingConv}>Annuler</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleStartDiscussion();
+                }}
+                disabled={isCreatingConv}
+              >
+                {isCreatingConv ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Création...
+                  </>
+                ) : (
+                  "Oui, discuter"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Card>
 
       {/* Styles globaux pour fix le rendu Tailwind dans Leaflet Popup et Checkpoints */}

@@ -228,6 +228,14 @@ const App = () => (
               }
             />
             <Route
+              path="/mes-messages/direct/:conversationId"
+              element={
+                <ProtectedRoute requiredRoles={['client']}>
+                  <ParentMessages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/parent/recherche-carte"
               element={
                 <ProtectedRoute requiredRoles={['client']}>
@@ -295,6 +303,14 @@ const App = () => (
             />
             <Route
               path="/repetiteur/messages/:contractId"
+              element={
+                <ProtectedRoute requiredRoles={['prestataire']}>
+                  <RepetiteurMessages />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/repetiteur/messages/direct/:conversationId"
               element={
                 <ProtectedRoute requiredRoles={['prestataire']}>
                   <RepetiteurMessages />

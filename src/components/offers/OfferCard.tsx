@@ -66,8 +66,8 @@ export function OfferCard({
           </div>
           <div className="flex flex-col items-end gap-2">
             {showStatus && (
-              <Badge className={cn('shrink-0', statusColors[offer.statut])}>
-                {OFFER_STATUS_LABELS[offer.statut]}
+              <Badge className={cn('shrink-0', statusColors[offer.statut], offer.statut === 'fermee' && variant === 'repetiteur' && "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300")}>
+                {offer.statut === 'fermee' && variant === 'repetiteur' ? 'Déjà conclu' : OFFER_STATUS_LABELS[offer.statut]}
               </Badge>
             )}
             {offer.profiles && (
@@ -135,8 +135,9 @@ export function OfferCard({
             onClick={() => onAction(offer.id)}
             className="w-full"
             variant={variant === 'parent' ? 'outline' : 'default'}
+            disabled={offer.statut === 'fermee' && variant === 'repetiteur'}
           >
-            {actionLabel}
+            {offer.statut === 'fermee' && variant === 'repetiteur' ? 'Offre indisponible' : actionLabel}
           </Button>
         </CardFooter>
       )}
