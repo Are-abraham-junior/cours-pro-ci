@@ -1,13 +1,32 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Map as MapIcon, User, Star, ArrowRight } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  MessageSquare, 
+  Map as MapIcon, 
+  Star, 
+  User, 
+  Loader2 
+} from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 // Fix pour les icônes de marqueurs Leaflet avec Vite (les chemins relatifs sont parfois mal résolus)
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -33,9 +52,14 @@ interface RepetiteurMarker {
 
 export default function RechercheCarte() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [repetiteurs, setRepetiteurs] = useState<RepetiteurMarker[]>([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [selectedRep, setSelectedRep] = useState<RepetiteurMarker | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCreatingConv, setIsCreatingConv] = useState(false);
 
   // Centre par défaut : Abidjan
   const defaultCenter: [number, number] = [5.3364, -4.0267];
@@ -90,6 +114,62 @@ export default function RechercheCarte() {
     return `${new Intl.NumberFormat('fr-FR').format(amount)} FCFA/h`;
   };
 
+  const handleStartDiscussion = async () => {
+    if (!user || !selectedRep) return;
+    
+    setIsCreatingConv(true);
+    try {
+      // 1. Créer ou récupérer la conversation directe
+      // Note: On utilise select + insert au lieu de upsert pour mieux gérer l'id retourné
+      const { data: existingConv, error: fetchError } = await supabase
+        .from('direct_conversations' as any)
+        .select('id')
+        .eq('parent_id', user.id)
+        .eq('repetiteur_id', selectedRep.id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      let conversationId = existingConv?.id;
+
+      if (!conversationId) {
+        const { data: newConv, error: createError } = await supabase
+          .from('direct_conversations' as any)
+          .insert({
+            parent_id: user.id,
+            repetiteur_id: selectedRep.id
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        conversationId = newConv.id;
+
+        // 2. Envoyer le message système initial
+        await supabase.from('messages' as any).insert({
+          conversation_id: conversationId,
+          sender_id: user.id, // Le parent initie, mais c'est un message système
+          content: "Un parent souhaite vous contacter pour des cours particuliers. Votre premier message de réponse déduira 1 token de votre solde.",
+          is_system: true
+        });
+      }
+
+      // 3. Rediriger vers la messagerie
+      navigate(`/mes-messages/direct/${conversationId}`);
+      
+    } catch (error) {
+      console.error('Erreur lors de la création de la discussion:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de démarrer la discussion. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCreatingConv(false);
+      setIsDialogOpen(false);
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout title="Recherche à proximité">
@@ -101,7 +181,7 @@ export default function RechercheCarte() {
   }
 
   return (
-    <DashboardLayout 
+    <DashboardLayout
       title="Recherche de Répétiteurs"
       description="Trouvez les professeurs particuliers les plus proches de chez vous"
     >
@@ -116,9 +196,9 @@ export default function RechercheCarte() {
           </p>
         </div>
 
-        <MapContainer 
-          center={userLocation || defaultCenter} 
-          zoom={12} 
+        <MapContainer
+          center={userLocation || defaultCenter}
+          zoom={12}
           style={{ height: '100%', width: '100%', zIndex: 0 }}
         >
           <TileLayer
@@ -142,8 +222,8 @@ export default function RechercheCarte() {
 
           {/* Marqueurs des répétiteurs */}
           {repetiteurs.map((rep) => (
-            <Marker 
-              key={rep.id} 
+            <Marker
+              key={rep.id}
               position={[rep.latitude, rep.longitude]}
               icon={L.divIcon({
                 className: 'custom-checkpoint-icon',
@@ -156,10 +236,10 @@ export default function RechercheCarte() {
                       </svg>
                     </div>
                     <div class="checkpoint-avatar">
-                      ${rep.avatar_url 
-                        ? `<img src="${rep.avatar_url}" alt="${rep.full_name}" />`
-                        : `<div class="avatar-placeholder">${rep.full_name.charAt(0)}</div>`
-                      }
+                      ${rep.avatar_url
+                    ? `<img src="${rep.avatar_url}" alt="${rep.full_name}" />`
+                    : `<div class="avatar-placeholder">${rep.full_name.charAt(0)}</div>`
+                  }
                     </div>
                   </div>
                 `,
@@ -204,20 +284,54 @@ export default function RechercheCarte() {
                     <span className="text-sm font-semibold">{formatBudget(rep.tarif_horaire)}</span>
                   </div>
 
-                  <Button 
-                    className="w-full text-xs h-8" 
-                    onClick={() => navigate(`/repetiteurs/${rep.id}`)}
+                  <Button
+                    className="w-full text-xs h-8 gap-2"
+                    onClick={() => {
+                      setSelectedRep(rep);
+                      setIsDialogOpen(true);
+                    }}
                   >
-                    Voir le profil complet
-                    <ArrowRight className="h-3 w-3 ml-1.5" />
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    Discuter
                   </Button>
                 </div>
               </Popup>
             </Marker>
           ))}
         </MapContainer>
+
+        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Démarrer une discussion ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Vous allez être mis en relation avec {selectedRep?.full_name}. 
+                Souhaitez-vous continuer ?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isCreatingConv}>Annuler</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleStartDiscussion();
+                }}
+                disabled={isCreatingConv}
+              >
+                {isCreatingConv ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Création...
+                  </>
+                ) : (
+                  "Oui, discuter"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </Card>
-      
+
       {/* Styles globaux pour fix le rendu Tailwind dans Leaflet Popup et Checkpoints */}
       <style>{`
         .custom-checkpoint-icon {
@@ -250,7 +364,7 @@ export default function RechercheCarte() {
           background: #f1f5f9;
           display: flex;
           align-items: center;
-          justify-center: center;
+          justify-content: center;
           border: 1px solid rgba(0,0,0,0.05);
         }
         .checkpoint-avatar img {

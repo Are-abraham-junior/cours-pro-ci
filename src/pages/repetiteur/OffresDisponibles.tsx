@@ -56,8 +56,9 @@ export default function OffresDisponibles() {
       const { data, error } = await supabase
         .from('offers')
         .select('*, profiles(full_name, avatar_url)')
-        .eq('statut', 'ouverte')
-        .order('created_at', { ascending: false });
+        .in('statut', ['ouverte', 'fermee'])
+        .order('created_at', { ascending: false })
+        .limit(100);
 
       if (error) throw error;
 
@@ -212,6 +213,7 @@ export default function OffresDisponibles() {
                 <OfferCard
                   key={offer.id}
                   offer={offer}
+                  showStatus={true}
                   actionLabel="Voir détails"
                   onAction={handleViewDetails}
                   variant="repetiteur"

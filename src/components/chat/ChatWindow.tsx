@@ -8,8 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format, isToday, isYesterday } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+import { useDirectMessages } from '@/hooks/useDirectMessages';
+
 interface ChatWindowProps {
-  contractId: string;
+  chatId: string;
+  chatType: 'contract' | 'direct';
   otherUser: {
     id: string;
     full_name: string;
@@ -24,9 +27,13 @@ function formatDateSeparator(date: Date): string {
   return format(date, 'dd MMMM yyyy', { locale: fr });
 }
 
-export function ChatWindow({ contractId, otherUser, contractInfo }: ChatWindowProps) {
+export function ChatWindow({ chatId, chatType, otherUser, contractInfo }: ChatWindowProps) {
   const { user } = useAuth();
-  const { messages, loading, sending, sendMessage } = useMessages(contractId);
+  
+  const contractMessages = useMessages(chatType === 'contract' ? chatId : null);
+  const directMessages = useDirectMessages(chatType === 'direct' ? chatId : null);
+
+  const { messages, loading, sending, sendMessage } = chatType === 'contract' ? contractMessages : directMessages;
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages
@@ -104,6 +111,7 @@ export function ChatWindow({ contractId, otherUser, contractInfo }: ChatWindowPr
                   isMine={msg.sender_id === user?.id}
                   isRead={msg.is_read}
                   audioUrl={msg.audio_url}
+                  isSystem={(msg as any).is_system}
                 />
               ))}
             </div>

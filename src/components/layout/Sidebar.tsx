@@ -18,6 +18,7 @@ import {
   FileCheck,
   MessageCircle,
   Map,
+  Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 import { NotificationBell } from '@/components/chat/NotificationBell';
@@ -49,6 +50,7 @@ const navItems: NavItem[] = [
   { label: 'Mes candidatures', href: '/mes-candidatures', icon: Send, roles: ['prestataire'] },
   { label: 'Mes contrats', href: '/repetiteur/contrats', icon: FileCheck, roles: ['prestataire'] },
   { label: 'Messages', href: '/repetiteur/messages', icon: MessageCircle, roles: ['prestataire'] },
+  { label: 'Tokens', href: '/repetiteur/tokens', icon: Zap, roles: ['prestataire'] },
 ];
 
 export function Sidebar() {
@@ -155,12 +157,12 @@ export function Sidebar() {
     <>
       {/* Mobile menu button */}
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden"
+        className="fixed top-4 left-4 z-50 lg:hidden bg-background/95 backdrop-blur shadow-sm border border-border"
         onClick={() => setMobileOpen(!mobileOpen)}
       >
-        {mobileOpen ? <X /> : <Menu />}
+        {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
       {/* Mobile overlay */}

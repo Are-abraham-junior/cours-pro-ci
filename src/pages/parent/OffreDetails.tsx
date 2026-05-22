@@ -15,7 +15,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Loader2, MapPin, Calendar, Coins, Users } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, Calendar, Coins, Users, MessageCircle } from 'lucide-react';
 import { OFFER_STATUS_LABELS, OfferStatus, ApplicationStatus } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
@@ -187,6 +187,18 @@ export default function OffreDetails() {
         )
       );
 
+      if (action === 'acceptee' && offer) {
+        // Mettre à jour l'offre à 'fermee'
+        const { error: offerError } = await supabase
+          .from('offers')
+          .update({ statut: 'fermee' })
+          .eq('id', offer.id);
+        
+        if (!offerError) {
+          setOffer({ ...offer, statut: 'fermee' });
+        }
+      }
+
       toast({
         title: action === 'acceptee' ? 'Candidature acceptée' : 'Candidature refusée',
         description:
@@ -311,6 +323,7 @@ export default function OffreDetails() {
                   variant="parent"
                   onAccept={(id) => handleApplicationAction(id, 'acceptee')}
                   onReject={(id) => handleApplicationAction(id, 'refusee')}
+                  onChat={() => navigate('/mes-messages')}
                   isLoading={updating}
                 />
               ))}

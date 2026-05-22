@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, GraduationCap, MapPin, Clock, Briefcase, FileText } from 'lucide-react';
+import { LocationPicker } from '@/components/profile/LocationPicker';
 import { MATIERES, NIVEAUX, DISPONIBILITES } from '@/lib/constants';
 import { logger } from '@/lib/logger'; // Hypothetical logging utility
 
@@ -454,59 +455,20 @@ export function RepetiteurProfileForm() {
                 )}
               />
 
-              {/* Localisation GPS (Latitude / Longitude) */}
+              {/* Localisation GPS interactive sur la carte */}
               <div className="space-y-2 pt-2 border-t text-sm">
-                <FormLabel>Position GPS sur la carte</FormLabel>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      if ("geolocation" in navigator) {
-                        navigator.geolocation.getCurrentPosition(
-                          (position) => {
-                            form.setValue('latitude', position.coords.latitude, { shouldDirty: true });
-                            form.setValue('longitude', position.coords.longitude, { shouldDirty: true });
-                            toast({
-                              title: "Position capturée",
-                              description: "Vos coordonnées GPS ont été mises à jour.",
-                            });
-                          },
-                          (error) => {
-                            console.error(error);
-                            toast({
-                              title: "Erreur GPS",
-                              description: "Impossible d'obtenir votre position. Autorisez l'accès à la localisation dans votre navigateur.",
-                              variant: "destructive"
-                            });
-                          }
-                        );
-                      } else {
-                        toast({
-                          title: "Non supporté",
-                          description: "La géolocalisation n'est pas supportée par votre navigateur.",
-                          variant: "destructive"
-                        });
-                      }
-                    }}
-                    className="w-full sm:w-auto"
-                  >
-                    <MapPin className="h-4 w-4 mr-2" />
-                    Utiliser ma position actuelle
-                  </Button>
-
-                  {form.watch('latitude') && form.watch('longitude') ? (
-                    <span className="text-xs text-green-600 font-medium flex-shrink-0 bg-green-50 px-2 py-1 rounded-md border border-green-200">
-                      Coordonnées capturées ✓
-                    </span>
-                  ) : (
-                    <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 flex-shrink-0">
-                      Position requise
-                    </span>
-                  )}
-                </div>
+                <FormLabel>Position sur la carte</FormLabel>
+                <LocationPicker
+                  latitude={form.watch('latitude')}
+                  longitude={form.watch('longitude')}
+                  onLocationChange={(lat, lng) => {
+                    form.setValue('latitude', lat, { shouldDirty: true });
+                    form.setValue('longitude', lng, { shouldDirty: true });
+                  }}
+                />
                 <FormDescription>
                   Indispensable pour que les parents proches de vous puissent vous trouver sur la carte.
+                  Cliquez directement sur la carte pour placer votre position exacte.
                 </FormDescription>
               </div>
             </CardContent>

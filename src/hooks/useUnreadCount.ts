@@ -19,21 +19,38 @@ export function useUnreadCount() {
       .or(`parent_id.eq.${user.id},repetiteur_id.eq.${user.id}`)
       .eq('statut', 'actif');
 
-    if (!contracts || contracts.length === 0) {
-      setUnreadCount(0);
-      return;
+    // Récupère les conversations directes de l'utilisateur
+    const { data: directConvs } = await db
+      .from('direct_conversations')
+      .select('id')
+      .or(`parent_id.eq.${user.id},repetiteur_id.eq.${user.id}`);
+
+    const contractIds = contracts?.map((c) => c.id) || [];
+    const directConvIds = directConvs?.map((c: any) => c.id) || [];
+
+    let totalUnread = 0;
+
+    if (contractIds.length > 0) {
+      const { count: contractCount } = await db
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .in('contract_id', contractIds)
+        .neq('sender_id', user.id)
+        .eq('is_read', false);
+      totalUnread += contractCount || 0;
     }
 
-    const contractIds = contracts.map((c) => c.id);
+    if (directConvIds.length > 0) {
+      const { count: directCount } = await db
+        .from('messages')
+        .select('id', { count: 'exact', head: true })
+        .in('conversation_id', directConvIds)
+        .neq('sender_id', user.id)
+        .eq('is_read', false);
+      totalUnread += directCount || 0;
+    }
 
-    const { count } = await db
-      .from('messages')
-      .select('id', { count: 'exact', head: true })
-      .in('contract_id', contractIds)
-      .neq('sender_id', user.id)
-      .eq('is_read', false);
-
-    setUnreadCount(count || 0);
+    setUnreadCount(totalUnread);
   }, [user]);
 
   useEffect(() => {

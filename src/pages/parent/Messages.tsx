@@ -5,7 +5,7 @@ import { ConversationList, Conversation } from '@/components/chat/ConversationLi
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { MessageCircle, ArrowLeft } from 'lucide-react';
+import { MessageCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,11 +13,11 @@ const db = supabase as any;
 
 export default function ParentMessages() {
   const { user } = useAuth();
-  const { contractId: paramContractId } = useParams<{ contractId?: string }>();
+  const { contractId: paramContractId, conversationId: paramConvId } = useParams<{ contractId?: string; conversationId?: string }>();
   const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedContractId, setSelectedContractId] = useState<string | null>(
-    paramContractId || null
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(
+    paramContractId || paramConvId || null
   );
   const [loading, setLoading] = useState(true);
 
@@ -25,20 +25,28 @@ export default function ParentMessages() {
     if (!user) return;
     setLoading(true);
     try {
-      const { data: contracts, error } = await supabase
+      const { data: contracts, error: contractsError } = await supabase
         .from('contracts')
         .select('id, matiere, niveau, repetiteur_id')
         .eq('parent_id', user.id)
         .eq('statut', 'actif')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      if (!contracts || contracts.length === 0) {
-        setConversations([]);
-        return;
-      }
+      if (contractsError) throw contractsError;
 
-      const repetiteurIds = contracts.map((c) => c.repetiteur_id);
+      // 2. Récupérer les conversations directes
+      const { data: directs, error: directsError } = await supabase
+        .from('direct_conversations' as any)
+        .select('id, repetiteur_id')
+        .eq('parent_id', user.id);
+
+      if (directsError) throw directsError;
+
+      const repetiteurIds = [
+        ...(contracts?.map((c) => c.repetiteur_id) || []),
+        ...(directs?.map((d) => d.repetiteur_id) || [])
+      ];
+      
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name, avatar_url')
@@ -46,54 +54,62 @@ export default function ParentMessages() {
 
       const profilesMap = new Map(profiles?.map((p) => [p.id, p]) || []);
 
-      const convs: Conversation[] = await Promise.all(
-        contracts.map(async (contract) => {
+      // 3. Formater les conversations de contrats
+      const contractConvs: Conversation[] = await Promise.all(
+        (contracts || []).map(async (contract) => {
           const [lastMsgResult, unreadResult] = await Promise.all([
-            db
-              .from('messages')
-              .select('content, created_at, sender_id')
-              .eq('contract_id', contract.id)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .maybeSingle(),
-            db
-              .from('messages')
-              .select('id', { count: 'exact', head: true })
-              .eq('contract_id', contract.id)
-              .neq('sender_id', user.id)
-              .eq('is_read', false),
+            db.from('messages').select('content, created_at, sender_id').eq('contract_id', contract.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+            db.from('messages').select('id', { count: 'exact', head: true }).eq('contract_id', contract.id).neq('sender_id', user.id).eq('is_read', false),
           ]);
-
           const profile = profilesMap.get(contract.repetiteur_id);
-          const lastMsgData = lastMsgResult.data as { content: string; created_at: string; sender_id: string } | null;
+          const lastMsgData = lastMsgResult.data;
           return {
-            contractId: contract.id,
-            otherUser: profile || {
-              id: contract.repetiteur_id,
-              full_name: 'Répétiteur',
-              avatar_url: null,
-            },
+            chatId: contract.id,
+            otherUser: profile || { id: contract.repetiteur_id, full_name: 'Répétiteur', avatar_url: null },
             contractInfo: `${contract.matiere} - ${contract.niveau}`,
-            lastMessage: lastMsgData
-              ? {
-                  content: lastMsgData.content,
-                  created_at: lastMsgData.created_at,
-                  is_mine: lastMsgData.sender_id === user.id,
-                }
-              : undefined,
+            lastMessage: lastMsgData ? { content: lastMsgData.content, created_at: lastMsgData.created_at, is_mine: lastMsgData.sender_id === user.id } : undefined,
             unreadCount: unreadResult.count || 0,
-          };
+            type: 'contract'
+          } as any;
         })
       );
 
-      setConversations(convs);
-      if (!selectedContractId && convs.length > 0) {
-        setSelectedContractId(convs[0].contractId);
+      // 4. Formater les conversations directes
+      const directConvs: Conversation[] = await Promise.all(
+        (directs || []).map(async (direct) => {
+          const [lastMsgResult, unreadResult] = await Promise.all([
+            db.from('messages').select('content, created_at, sender_id').eq('conversation_id', direct.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+            db.from('messages').select('id', { count: 'exact', head: true }).eq('conversation_id', direct.id).neq('sender_id', user.id).eq('is_read', false),
+          ]);
+          const profile = profilesMap.get(direct.repetiteur_id);
+          const lastMsgData = lastMsgResult.data;
+          return {
+            chatId: direct.id,
+            otherUser: profile || { id: direct.repetiteur_id, full_name: 'Répétiteur', avatar_url: null },
+            contractInfo: "Discussion directe",
+            lastMessage: lastMsgData ? { content: lastMsgData.content, created_at: lastMsgData.created_at, is_mine: lastMsgData.sender_id === user.id } : undefined,
+            unreadCount: unreadResult.count || 0,
+            type: 'direct'
+          } as any;
+        })
+      );
+
+      const allConvs = [...contractConvs, ...directConvs].sort((a, b) => {
+        const dateA = a.lastMessage?.created_at || '0';
+        const dateB = b.lastMessage?.created_at || '0';
+        return dateB.localeCompare(dateA);
+      });
+
+      setConversations(allConvs);
+      if (!selectedChatId && allConvs.length > 0) {
+        const first = allConvs[0];
+        setSelectedChatId(first.chatId);
+        navigate(first.type === 'contract' ? `/mes-messages/${first.chatId}` : `/mes-messages/direct/${first.chatId}`);
       }
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, navigate, selectedChatId]);
 
   useEffect(() => {
     fetchConversations();
@@ -102,13 +118,14 @@ export default function ParentMessages() {
   }, [fetchConversations]);
 
   useEffect(() => {
-    if (paramContractId) setSelectedContractId(paramContractId);
-  }, [paramContractId]);
+    if (paramContractId) setSelectedChatId(paramContractId);
+    else if (paramConvId) setSelectedChatId(paramConvId);
+  }, [paramContractId, paramConvId]);
 
-  const selectedConv = conversations.find((c) => c.contractId === selectedContractId);
+  const selectedConv = conversations.find((c) => c.chatId === selectedChatId) as (Conversation & { type: 'contract' | 'direct' }) | undefined;
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const showList = !isMobile || !selectedContractId;
-  const showChat = !isMobile || !!selectedContractId;
+  const showList = !isMobile || !selectedChatId;
+  const showChat = !isMobile || !!selectedChatId;
 
   return (
     <DashboardLayout title="Messages">
@@ -123,10 +140,11 @@ export default function ParentMessages() {
             </div>
             <ConversationList
               conversations={conversations}
-              selectedContractId={selectedContractId}
+              selectedChatId={selectedChatId}
               onSelect={(id) => {
-                setSelectedContractId(id);
-                navigate(`/mes-messages/${id}`);
+                const conv = conversations.find(c => c.chatId === id) as any;
+                setSelectedChatId(id);
+                navigate(conv?.type === 'contract' ? `/mes-messages/${id}` : `/mes-messages/direct/${id}`);
               }}
               loading={loading}
             />
@@ -138,15 +156,16 @@ export default function ParentMessages() {
             {selectedConv ? (
               <>
                 {isMobile && (
-                  <Button variant="ghost" size="sm" className="self-start m-2" onClick={() => setSelectedContractId(null)}>
+                  <Button variant="ghost" size="sm" className="self-start m-2" onClick={() => setSelectedChatId(null)}>
                     <ArrowLeft className="h-4 w-4 mr-1" /> Retour
                   </Button>
                 )}
-                <ChatWindow
-                  contractId={selectedConv.contractId}
-                  otherUser={selectedConv.otherUser}
-                  contractInfo={selectedConv.contractInfo}
-                />
+                  <ChatWindow
+                    chatId={selectedConv.chatId}
+                    chatType={selectedConv.type}
+                    otherUser={selectedConv.otherUser}
+                    contractInfo={selectedConv.contractInfo}
+                  />
               </>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground bg-[#f0f2f5] dark:bg-zinc-900">
